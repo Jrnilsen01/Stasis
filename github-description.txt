@@ -1,0 +1,1 @@
+A Windows game overlay host built as an alternative to Overwolf. No telemetry, no ads, no account. App shell only so far; the overlay engine is not built yet.

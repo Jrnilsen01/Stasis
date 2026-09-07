@@ -1,0 +1,52 @@
+name: Proposal
+description: Suggest a feature, a change, or a direction
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check `TODO.md` first. Most of the obvious work is already listed there
+        with the reasoning attached, and the large questions (anti-cheat strategy,
+        the rendering path, what a module actually is) are open on purpose rather
+        than forgotten.
+
+        Design direction is not open to proposals in this form. `DESIGN.md` is
+        authored by the project owner, so a colour, radius, typeface, or motion
+        change belongs in an issue about the direction itself, not a proposal to
+        change one screen. `CONTRIBUTING.md` explains why.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is hard or impossible today. Describe the situation, not the solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you are proposing
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Does this need the overlay engine?
+      description: >
+        The engine does not exist. A proposal that depends on it is still worth
+        filing, it just cannot be built until the decisions in TODO section 4 are
+        settled.
+      options:
+        - No, it works in the shell as it is today
+        - Yes, it needs the overlay engine
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What else you considered
+      description: Including doing nothing, if that is a real option.

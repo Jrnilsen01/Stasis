@@ -1,0 +1,104 @@
+/*
+ * Design tokens. Values and their reasons are recorded in DESIGN.md; the
+ * contrast ratios in the comments were measured, not estimated.
+ */
+
+:root {
+  /* Tells the platform to draw scrollbars, form controls, and the caret in
+     their dark variants. Without it the OS paints a light scrollbar against a
+     near-black surface, which is the one bright edge in the whole window. */
+  color-scheme: dark;
+
+  /* Surfaces. Warm-leaning greys: a pure neutral reads blue beside copper. */
+  --surface-base: #0b0a09;
+  --surface-raised: #131211;
+  --surface-panel: #1b1a18;
+  --surface-edge: #262421;
+
+  /* Text. Nothing dimmer than --text-muted exists: the next tone down
+     measured 3.2:1 and fails AA. */
+  --text-primary: #e8e4de;   /* 13.73:1 on panel */
+  --text-secondary: #a8a29a; /*  6.87:1 on panel */
+  --text-muted: #9a948c;     /*  5.79:1 on panel */
+
+  /* Accent, split in two. --copper-fill is 4.08:1 on --surface-edge and so
+     cannot carry text there; --copper-text passes on every surface. */
+  --copper-fill: #b87333;
+  --copper-text: #d08a42;
+  --copper-on-fill: #0b0a09; /* 5.22:1 against --copper-fill */
+
+  /* State. Functional signals only, always paired with a word. */
+  --state-error: #e5533d;
+  --state-ok: #5fa86b;
+
+  /* Boundaries. The hairline is 1.47:1 and is decoration: it divides, it never
+     bounds a control. Controls use --border-control, which clears the 3:1
+     non-text bar on every surface in this system. */
+  --border-hairline: #3a3733;
+  --border-control: #6e6963;
+
+  /* The identity motif: a lit top edge, as if light caught a machined bevel.
+     One hairline, never doubled into an outline plus a glow. */
+  --edge-lit: rgba(255, 255, 255, 0.055);
+
+  --font-ui: "Barlow", system-ui, sans-serif;
+  --font-condensed: "Barlow Condensed", "Barlow", system-ui, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Tight radii. Machined edges, not pills. Nothing here is fully rounded. */
+  --radius-control: 2px;
+  --radius-panel: 3px;
+
+  /* MOTION dial is 1: state transitions only. There are no keyframes in this
+     stylesheet and no animation that runs without the user causing it. */
+  --t-fast: 120ms ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  /* The window chrome is ours, so nothing should rubber-band or select
+     like a document. */
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* One focus style for the whole app, on the accent, well above the 3:1 bar.
+   Nothing anywhere sets outline: none without this replacing it. */
+:focus-visible {
+  outline: 2px solid var(--copper-text);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--copper-fill);
+  color: var(--copper-on-fill);
+}

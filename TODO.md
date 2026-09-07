@@ -1,0 +1,196 @@
+# TODO
+
+Ordered by what blocks what, not by size. Items marked **[decision]** need the
+owner to choose before anyone can act on them.
+
+The honest state of the project: the app shell works and is verified, there is
+no overlay engine, no test suite, no CI, and no git history. Everything below
+follows from that.
+
+---
+
+## 1. Decisions needed before going public
+
+- [x] **[decision] Confirm the name.** Decided: **Stasis**. Applied across the
+      code, config, README, and DESIGN.md.
+- [x] **Clear the name.** Cleared by the owner. The known collision with
+      STASIS, the 2015 adventure game by The Brotherhood that sells on Steam,
+      was raised and accepted.
+- [x] **[decision] Pick a licence.** Decided: **Apache-2.0**, for the explicit
+      patent grant. `LICENSE` is the verbatim upstream text, and `package.json`
+      and `Cargo.toml` both carry the SPDX id.
+- [x] Fill the copyright holder in the `LICENSE` appendix. Set to
+      `Copyright 2026 Jrnilsen01`.
+- [ ] **[decision] Repo owner and name.** Personal account or an organisation.
+      An org is worth it if anyone else will ever have commit rights.
+- [x] **[decision] Telemetry stance.** Decided: no telemetry, no ads, no
+      account, committed to in the README as a promise for every version rather
+      than a description of this one. Nothing in the current code contradicts
+      it; keep it that way, and treat any future analytics dependency as a
+      change to that section first.
+
+## 2. Before the first public commit
+
+- [ ] `git init`, and make the first commit the current working state so the
+      history starts clean.
+- [x] Add the chosen `LICENSE` file, and a licence line in `README.md`.
+- [x] Extend `.gitignore`. `dist` and `node_modules` were already covered.
+      `src-tauri/target/` was not, and it is the big one. Also added
+      `src-tauri/gen/schemas/`, which tauri-build regenerates every build, and
+      `app-icon-sizes.png`.
+- [x] `public/` removed. The premise of this item was slightly off: there was
+      no `publicDir` line in `vite.config.ts` to drop, so the folder was only
+      Vite's default convention directory sitting empty. Nothing referenced it,
+      and `npm run build` is clean without it. Vite picks the convention back up
+      on its own if a `public/` is ever added again.
+- [x] `CONTRIBUTING.md` written. Covers the shell-versus-engine state, the
+      toolchain table, the local checks that stand in for the missing CI, the
+      `DESIGN.md` authority rule, and what will not be merged.
+- [x] `SECURITY.md` written. It routes reports through GitHub's private
+      vulnerability reporting rather than an email address, and documents the
+      real current surface: `reveal_path`, the Steam manifest parsing, the
+      `module.json` read, and the settings file.
+- [ ] Enable private vulnerability reporting in the repo's Settings, Security
+      tab. `SECURITY.md` tells reporters to use it, so it has to be switched on
+      or that instruction is a dead end.
+- [x] `CODE_OF_CONDUCT.md`. Contributor Covenant 2.1, verbatim apart from the
+      enforcement contact, which names @Jrnilsen01 through GitHub.
+- [ ] Give the Code of Conduct a private reporting channel. It currently routes
+      through GitHub with no private option, which the file says out loud. A
+      conduct report that has to be filed in public is a report that often does
+      not get filed. Worth fixing before the project has a community rather
+      than after.
+- [x] Issue and PR templates, in `.github/`. Three issue forms (bug, proposal,
+      question) plus `PULL_REQUEST_TEMPLATE.md`. The bug form requires Windows
+      version, GPU and driver, and the commit built from, and asks for game and
+      launcher where a title is involved. Blank issues are disabled so the
+      structured fields are not bypassed.
+- [ ] Add a `contact_links` entry to `.github/ISSUE_TEMPLATE/config.yml` sending
+      security reports to the advisory page. It needs the real owner and repo in
+      the URL, so it waits on the repo being created. Until then both the bug
+      form and `SECURITY.md` say it in prose.
+- [x] `CHANGELOG.md` and a versioning policy. Solved with a single source of
+      truth rather than a sync script: `version` now lives only in
+      `src-tauri/Cargo.toml`. The key was removed from `tauri.conf.json`, which
+      makes Tauri fall back to Cargo.toml by documented behaviour, and from
+      `package.json`, which is private and publishes nothing. Verified end to
+      end: the built binary reports ProductVersion 0.1.0.
+- [ ] The Tauri bundle identifier changed to `com.joaki.stasis`, which moves the
+      app data directory. Any settings written under the old identifier are
+      orphaned. Harmless before release, worth noting so it is not diagnosed
+      twice.
+- [x] `Cargo.toml` authors set to `["Jrnilsen01"]`.
+
+## 3. Correctness debt worth paying first
+
+The VDF parsing is the highest-value test target in the codebase: it already
+shipped one real bug, where the registry spelling and the manifest spelling of
+the same Steam folder were treated as two libraries and every game was listed
+twice.
+
+- [ ] Rust unit tests for `steam.rs`: `vdf_values` against real manifest
+      samples, the case-and-separator dedupe in `library_folders`, and the
+      override-is-authoritative behaviour in `candidate_roots`.
+- [ ] Rust tests for `modules.rs` manifest parsing, including a malformed
+      `module.json` (currently surfaces as an error, which is intended).
+- [ ] Frontend tests for `format.ts`. Boundary cases: exactly 1024 bytes, the
+      99.9 to 100 switch from one decimal to none, and null handling.
+- [ ] Exercise the three UI states never yet triggered: Steam found but
+      unreadable, Steam found with zero games, and a modules folder read
+      failure. They are implemented and unverified.
+- [ ] CI on Windows: `cargo test`, `cargo clippy -- -D warnings`, `cargo fmt
+      --check`, `tsc`, and a full `tauri build` on tags.
+- [ ] Add `lint` and `test` scripts to `package.json`; there are none.
+
+## 4. The product: the overlay engine
+
+This is the entire thing, and none of it exists yet.
+
+- [ ] **Anti-cheat strategy, before any injection code is written.** This is
+      the single largest risk to the project and it is not primarily technical.
+      Overwolf's real moat is that it is known to EAC, BattlEye, and publishers,
+      so its overlay does not get users banned. An unknown overlay that hooks
+      `Present` looks exactly like an ESP cheat to an anti-cheat driver, and
+      being open source cuts both ways: auditable, but also trivially forkable
+      into a cheat, which is precisely why vendors distrust it. Decide early
+      whether to pursue vendor relationships, restrict to games without kernel
+      anti-cheat, or use only officially sanctioned overlay APIs. Users getting
+      banned would end the project.
+- [ ] Choose the rendering path: D3D11/D3D12/Vulkan/OpenGL hooking, versus a
+      transparent click-through always-on-top window. The second is far safer
+      with anti-cheat and much worse for latency and exclusive fullscreen.
+- [ ] Overlay process model: in-process hook, or a separate process compositing
+      over the game. Separate is safer and slower.
+- [ ] Global hotkey registration, and a toggle that is guaranteed to release
+      input back to the game.
+- [ ] Exclusive fullscreen versus borderless behaviour, per game.
+
+## 5. The module system
+
+Third parties will write modules the moment the repo is public, so the format
+becomes a contract earlier than expected.
+
+- [ ] Specify and **version** the `module.json` schema. It currently has four
+      untyped fields and no version key, so there is no way to evolve it.
+- [ ] Decide what a module actually is: static HTML/JS in a webview, a WASM
+      module, or a native plugin. This determines the entire security model.
+- [ ] Module sandboxing and a permission model. A module that can read the
+      screen and the filesystem is a keylogger waiting to happen, and "we are
+      not adware" dies the first time a module exfiltrates something.
+- [ ] Enable and disable per module, and per game. The rail already shows
+      counts; the state has nowhere to live yet.
+- [ ] Installation flow. Folder drop works today and is honest; a registry or
+      index is a much larger commitment.
+
+## 6. Distribution and trust
+
+- [ ] **Code signing.** The installers are unsigned, so Windows SmartScreen
+      will warn every user. For a product whose pitch is trustworthiness this
+      matters more than usual. An OV certificate is the cheap path; EV clears
+      SmartScreen immediately and costs more.
+- [ ] Auto-update. Tauri's updater needs a signing key and a hosted manifest,
+      and the key handling should be settled before the first release.
+- [ ] Release workflow: tag, build, sign, attach installers, publish notes.
+- [ ] Reproducible-ish builds so a user can verify a binary matches the source.
+      This is worth real effort for an overlay people are asked to trust.
+
+## 7. Coverage
+
+- [ ] Launchers beyond Steam: Epic, GOG, Xbox/Game Pass, Battle.net, EA,
+      Ubisoft, and plain executables. The scanner is currently Steam-only, and
+      `ScanResult` will need to become per-source rather than one Steam shape.
+- [ ] macOS and Linux path detection in `steam.rs` is written but has never
+      been run. Either test it or mark the project Windows-only for now and say
+      so in the README.
+- [ ] Steam library changes are only picked up on a manual rescan. A file
+      watcher on `steamapps` would be cheap and better.
+
+## 8. UI and accessibility debt
+
+- [ ] Text scaling. Tauri disables zoom hotkeys by default, so users cannot
+      resize text in-app; only OS DPI scaling applies. Either enable
+      `zoomHotkeysEnabled` and verify the layout at 200%, or document that DPI
+      scaling is the supported route.
+- [ ] Screen reader pass. Roles and focus order look right and have never been
+      tested with NVDA or Narrator.
+- [ ] Structured logging with a log file the user can find and attach to a bug
+      report. There is currently no logging at all.
+- [ ] Settings currently lack validation: the Steam folder accepts any string
+      and only fails at scan time. Inline validation would be kinder.
+- [ ] A light theme, if it is ever wanted. Dark is currently the only theme and
+      `DESIGN.md` gives the reason. If light is added, both modes have to be
+      fully correct, not one plus an afterthought.
+
+## 9. Things to write down before contributors arrive
+
+- [x] An explicit statement that this is not a cheat and that contributions
+      enabling cheating will be refused. Said in `CONTRIBUTING.md` under "What
+      will not be merged", and in `SECURITY.md` for security reports.
+- [ ] Decide whether the not-a-cheat line also belongs in the README. It is the
+      first file most people read, and right now the statement only exists one
+      click deeper.
+- [x] Keep `DESIGN.md` authoritative for visual decisions, and require new UI
+      to state its reason. Both rules are in `CONTRIBUTING.md` under "Design
+      changes".
+- [ ] A roadmap that separates "shell" from "engine" so contributors do not
+      assume the overlay already works.

@@ -1,0 +1,23 @@
+name: Question
+description: Ask about how something works or why it was built this way
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        `README.md` covers what works, `DESIGN.md` covers why the interface looks
+        the way it does, `CONTRIBUTING.md` covers running and building it, and
+        `TODO.md` covers what does not exist yet and why. If one of those already
+        answers it, you will get there faster than an issue will.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What you already tried or read

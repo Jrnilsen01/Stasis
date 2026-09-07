@@ -1,0 +1,11 @@
+# Normalise text to LF in the repository. Git still checks out CRLF on Windows
+# when core.autocrlf is on, so this only stops line endings from varying by
+# whoever committed last.
+* text=auto
+
+# Binary assets. Never convert these.
+*.png binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary

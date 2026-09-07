@@ -1,0 +1,101 @@
+name: Bug report
+description: Something in the app shell behaves wrongly
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things worth knowing before you file:
+
+        **There is no overlay engine yet.** Stasis is currently the app shell, the
+        window you open outside the game. Nothing hooks, injects, or draws on top
+        of anything. "The overlay does not appear" is not a bug, it is the state
+        of the project.
+
+        **Do not report security problems here.** Read `SECURITY.md` and use
+        private vulnerability reporting instead. A public issue puts every user at
+        risk before there is a fix.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - Games (Steam scanning)
+        - Modules
+        - Settings
+        - Footprint bar (memory, CPU, uptime)
+        - Window, titlebar, or navigation
+        - Build or install
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Settings
+        2. Set the Steam folder to ...
+        3. Go to Games
+        4. Every title is listed twice
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Settings, System, About, then the "OS build" line.
+      placeholder: Windows 11 Home 26200
+    validations:
+      required: true
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver version
+      description: >
+        The window is rendered by WebView2, so the GPU and driver matter for
+        blank frames, flicker, and font rendering. They will matter far more once
+        the overlay engine exists.
+      placeholder: RTX 4070, NVIDIA 566.36
+    validations:
+      required: true
+
+  - type: input
+    id: game
+    attributes:
+      label: Game and launcher
+      description: >
+        Only if the bug involves a specific title. The scanner reads Steam and
+        nothing else so far, so a game missing because you own it on Epic, GOG,
+        or Game Pass is a known gap rather than a bug.
+      placeholder: Half-Life 2, Steam
+
+  - type: input
+    id: version
+    attributes:
+      label: Which build
+      description: >
+        There are no releases yet, so this is almost certainly a commit hash.
+        `git rev-parse --short HEAD` will give you one.
+      placeholder: built from main at a1b2c3d
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: >
+        Screenshots help. There is no log file to attach yet: the app does no
+        logging at all, which is its own open item.

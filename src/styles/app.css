@@ -1,0 +1,565 @@
+/*
+ * Layout and components.
+ *
+ * Two conventions run through this file:
+ *   1. Surfaces are matte. Elevation is carried by a hairline and a lit top
+ *      edge, not by shadow, so nothing floats and the ground plane holds.
+ *   2. Copper appears at three places only: the active rail item, the live
+ *      memory readout, and the one primary action on a screen. Everywhere else
+ *      is neutral, which is what lets those three read as signal.
+ */
+
+.shell {
+  height: 100%;
+  display: grid;
+  /* auto rather than fixed heights: at 200% zoom the bars grow instead of
+     clipping their text. */
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--surface-base);
+}
+
+/* ---------------------------------------------------------------- titlebar */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-left: var(--space-4);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-hairline);
+  box-shadow: inset 0 1px 0 var(--edge-lit);
+}
+
+.titlebar__drag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  /* Centred rather than baseline-aligned: the mark is a graphic and has no
+     baseline of its own, so baseline alignment would hang it off the text. */
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.wordmark {
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.wordmark__tag {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  /* The mark and the name are one unit; the descriptor is a separate thought. */
+  margin-left: var(--space-2);
+}
+
+.window-controls {
+  display: flex;
+  align-self: stretch;
+}
+
+.window-controls button {
+  width: 44px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.window-controls button:hover {
+  background: var(--surface-edge);
+  color: var(--text-primary);
+}
+
+.window-controls button:focus-visible {
+  outline-offset: -3px;
+}
+
+.window-controls button[data-action="close"]:hover {
+  background: var(--state-error);
+  color: var(--surface-base);
+}
+
+/* -------------------------------------------------------------------- body */
+
+.body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border-hairline);
+  min-width: 0;
+}
+
+.rail__heading {
+  font-family: var(--font-condensed);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  padding: var(--space-2) var(--space-3) var(--space-1);
+}
+
+.rail__item {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  /* Generous hit area: this is the control people use most. */
+  padding: 11px var(--space-3) 11px var(--space-4);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.rail__item:hover {
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+/* The left edge marks real state, so it carries information rather than
+   decoration. Weight and color change with it, so the state is never
+   signalled by hue alone. */
+.rail__item[aria-current="page"] {
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.rail__item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  background: var(--copper-fill);
+}
+
+.rail__count {
+  font-family: var(--font-condensed);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.main {
+  min-width: 0;
+  overflow-y: auto;
+  /* Nothing is ever allowed to scroll the shell sideways. */
+  overflow-x: hidden;
+}
+
+/* The default scrollbar is the one bright seam in an otherwise matte window,
+   so it is drawn in the same neutral ramp as everything else. The thumb keeps
+   3:1 against its track so it stays findable. */
+.main::-webkit-scrollbar {
+  width: 10px;
+}
+
+.main::-webkit-scrollbar-track {
+  background: var(--surface-base);
+}
+
+.main::-webkit-scrollbar-thumb {
+  background: var(--border-control);
+  border: 2px solid var(--surface-base);
+  border-radius: var(--radius-control);
+}
+
+.main::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* --------------------------------------------------------------- view head */
+
+.view-head {
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.view-title {
+  margin: 0;
+  font-family: var(--font-condensed);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+
+.view-note {
+  margin: var(--space-2) 0 0;
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------------------ states */
+
+/* Empty, loading, and error share one shape. Each says what happened and what
+   to do next; none of them says "No data". */
+.state {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5);
+  text-align: left;
+}
+
+.state__label {
+  font-family: var(--font-condensed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.state__label--error {
+  color: var(--state-error);
+}
+
+.state__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-condensed);
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.state__body {
+  margin: 0 0 var(--space-5);
+  color: var(--text-secondary);
+}
+
+/* Monospace appears here and nowhere else, and only for literal filenames the
+   user has to type or find. It is not used as a "technical" texture. */
+.state__body code,
+.view-note code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.92em;
+  color: var(--text-primary);
+}
+
+.state__list {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.state__list li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+  font-size: 13px;
+  /* Long Windows paths wrap instead of pushing the layout sideways. */
+  overflow-wrap: anywhere;
+}
+
+.state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.btn {
+  padding: 9px var(--space-4);
+  background: var(--surface-edge);
+  color: var(--text-primary);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.btn:hover:not(:disabled) {
+  background: #302d29;
+  border-color: var(--text-muted);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-color: var(--border-hairline);
+}
+
+/* One per screen. The accent is the focal point, so a second one would remove
+   the focal point rather than add emphasis. */
+.btn--primary {
+  background: var(--copper-fill);
+  color: var(--copper-on-fill);
+  border-color: var(--copper-fill);
+  font-weight: 600;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--copper-text);
+  border-color: var(--copper-text);
+}
+
+.btn--primary:disabled {
+  background: var(--surface-edge);
+  color: var(--text-muted);
+  border-color: var(--border-hairline);
+}
+
+/* ------------------------------------------------------------------- lists */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.toolbar__fact {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.toolbar__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.row__name {
+  min-width: 0;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.row__meta {
+  grid-column: 1;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.row__figure {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  text-align: right;
+  font-family: var(--font-condensed);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- settings */
+
+.settings {
+  max-width: 560px;
+  padding: var(--space-5) var(--space-6) var(--space-7);
+}
+
+.field {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.field__label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.field__hint {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 9px var(--space-3);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
+  font: inherit;
+}
+
+.select {
+  cursor: pointer;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.field__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+/* A saved or failed message is text first. Color is the second signal, never
+   the only one. */
+.field__status {
+  margin-top: var(--space-3);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.field__status--error {
+  color: var(--state-error);
+}
+
+/* --------------------------------------------------------------- statusbar */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-hairline);
+  box-shadow: inset 0 1px 0 var(--edge-lit);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.metric__label {
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.metric__value {
+  font-family: var(--font-condensed);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  /* Reserves width so a changing value cannot shift its neighbours, even if
+     the face lacks tabular figures. */
+  min-width: 7ch;
+}
+
+/* The one number the whole product argues about gets the accent. */
+.metric__value--accent {
+  color: var(--copper-text);
+}
+
+.metric__value--unknown {
+  color: var(--text-muted);
+}
+
+.statusbar__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* A square, not a dot: it belongs to the machined language, and it is always
+   accompanied by a word so the status never depends on seeing hue. */
+.pill__mark {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--text-muted);
+}
+
+.pill__mark--ok {
+  background: var(--state-ok);
+}
+
+.pill__mark--error {
+  background: var(--state-error);
+}
+
+/* ------------------------------------------------------------------ narrow */
+
+/* The window can be dragged to 720px. The rail tightens rather than turning
+   into unlabelled icons, because an icon-only rail would trade a layout
+   problem for an accessibility one. */
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+
+  .view-head,
+  .toolbar,
+  .row,
+  .settings {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .rail__count {
+    display: none;
+  }
+}

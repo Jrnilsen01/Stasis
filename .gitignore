@@ -1,0 +1,38 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Rust and Tauri build output. Tens of gigabytes once the deps are compiled.
+src-tauri/target/
+
+# Regenerated on every build by tauri-build.
+src-tauri/gen/schemas/
+
+# Intermediate sheet from tools/make-icon.py. The committed source asset is
+# app-icon.png; this one is disposable.
+app-icon-sizes.png
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc
