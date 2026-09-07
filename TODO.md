@@ -213,11 +213,13 @@ becomes a contract earlier than expected.
 - [x] An explicit statement that this is not a cheat and that contributions
       enabling cheating will be refused. Said in `CONTRIBUTING.md` under "What
       will not be merged", and in `SECURITY.md` for security reports.
-- [ ] Decide whether the not-a-cheat line also belongs in the README. It is the
-      first file most people read, and right now the statement only exists one
-      click deeper.
+- [x] The not-a-cheat line is now in the README, as its own section next to the
+      telemetry commitment, and it points at `CONTRIBUTING.md` and
+      `SECURITY.md` for the contribution and report cases.
 - [x] Keep `DESIGN.md` authoritative for visual decisions, and require new UI
       to state its reason. Both rules are in `CONTRIBUTING.md` under "Design
       changes".
-- [ ] A roadmap that separates "shell" from "engine" so contributors do not
-      assume the overlay already works.
+- [x] `ROADMAP.md` separates the shell from the engine: what works and is
+      tested, what is gated on the anti-cheat decision, what the module system
+      waits on, and what runs in parallel. It carries no dates, and says why.
+      Linked from the README paragraph that establishes the current state.

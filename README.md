@@ -6,7 +6,8 @@ as it would with nothing attached.
 
 This repository currently contains **the app shell only**: the window you open
 outside the game. There is no overlay engine, no injection, and no module
-runtime yet. Nothing in the UI pretends otherwise.
+runtime yet. Nothing in the UI pretends otherwise. `ROADMAP.md` separates what
+works from what is merely intended.
 
 ## No telemetry, no ads, no account
 
@@ -16,6 +17,16 @@ data and stay there.
 
 That holds for every version, not only this one. If it ever stops being true,
 this paragraph is the first thing that has to change.
+
+## This is not a cheat
+
+An overlay that will one day draw on top of a running game sits close enough to
+that category to be worth saying plainly. Stasis will not read another process's
+memory for gameplay advantage, and it will not show a player information the
+game has not already given them. Contributions that add either will be refused.
+
+`CONTRIBUTING.md` says the same thing for pull requests, and `SECURITY.md` for
+reports.
 
 ## What actually works
 
