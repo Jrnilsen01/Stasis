@@ -36,20 +36,30 @@ also trivially forkable into something that is not. Users getting banned would
 end the project, so the posture has to be decided before the first line of
 injection code, not discovered afterwards.
 
-In the order they block each other:
+**Decided: Stasis will hook the graphics API.** Injection into the game
+process, drawing in the game's own presentation path. This was chosen over a
+non-injecting transparent window, knowing the trade: parity with the incumbent
+and correct behaviour in every presentation mode, paid for with a per-API
+renderer to maintain, faults that land inside someone else's process, and a
+narrower set of titles.
 
-1. **Anti-cheat strategy.** Pursue vendor relationships, restrict to titles
-   without kernel anti-cheat, or use only officially sanctioned overlay APIs.
-2. **Rendering path.** Hooking D3D11/D3D12/Vulkan/OpenGL, against a transparent
-   click-through always-on-top window. The second is far safer and much worse
-   for latency and exclusive fullscreen.
-3. **Process model.** An in-process hook, or a separate process compositing over
-   the game. Separate is safer and slower.
-4. **Hotkeys**, including a toggle that is guaranteed to hand input back.
-5. **Exclusive fullscreen against borderless**, per game.
+Three consequences that follow, stated here rather than discovered later:
 
-Deciding 2 through 5 before 1 would be guessing at constraints that answer 1
-sets.
+- **Riot titles are out of scope.** Riot states there is no allow list for
+  Vanguard and draws its line at injected code. Valorant and League will not be
+  supported.
+- **Injection will break on somebody's patch day.** Valve's CS:GO Trusted Mode
+  required signed DLLs and blocked anything interfering with the game, and
+  overlays stopped working overnight. Stasis needs to detect that state and say
+  so, rather than appearing broken.
+- **There will be a supported-games list, and it will have gaps.** Per-title
+  quirks are unavoidable on this path. The list is the honest form of that.
+
+Still open, in the order they block each other: which graphics API ships first
+(one that works beats five that half work), the injection mechanism and its
+failure path, the process model, hotkeys with a guaranteed input release, and
+crash isolation so a fault disables the overlay rather than killing the game
+twice.
 
 ## After: the module system
 

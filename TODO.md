@@ -149,25 +149,66 @@ This is the entire thing, and none of it exists yet.
       what a module displayed rather than how it was drawn. Bans came from
       content, not technique, which moves that risk to section 5.
 
-      The decision itself is unchanged and still open: vendor relationships,
-      restrict to titles without kernel anti-cheat, sanctioned APIs only, or a
-      non-injecting transparent window. Users getting banned would end the
-      project.
+      **Decided: hook the graphics API.** Chosen by the owner over the
+      non-injecting transparent window that the research recommended, and over
+      sanctioned-APIs-only. The trade is accepted knowingly: feature parity with
+      the incumbent and correct behaviour in every presentation mode, against a
+      per-API renderer to maintain, crash liability inside someone else's game,
+      and the fork hazard below.
 
-      This is unverified research, not settled fact. Three quotes are
-      load-bearing and need checking against their sources before any of it is
-      published as the project's position.
+      The research is unverified, and three quotes in it are load-bearing. They
+      still need checking before any of this is published as the project's
+      public position, but they no longer block the build.
 - [ ] **Measure how many target titles actually present via exclusive
-      fullscreen.** The research could not establish it, and it is the one
-      unknown that could still change the rendering-path answer. PresentMon
-      across a target list is roughly a day, and it turns an argument into data.
+      fullscreen.** Less decisive now that hooking is chosen, since hooking
+      handles every presentation mode. Still worth an afternoon: it sizes how
+      much of the benefit the harder path is actually buying.
+- [ ] **The fork hazard is now live, and needs an answer.** An Apache-2.0
+      repository containing working `Present` hooks for several graphics APIs is
+      a cheat scaffold, and Overwolf says publicly that this is why their
+      technology stays closed. The not-a-cheat statements in `README.md`,
+      `CONTRIBUTING.md` and `SECURITY.md` are now load-bearing rather than
+      preventative. Options, none of them comfortable: accept it and say so
+      plainly, keep the hook layer in a separate repository under a copyleft
+      licence, or revisit the section 1 licence decision. Deciding not to decide
+      is the same as choosing the first.
+- [ ] **Riot titles are out of scope, by Riot's own statement.** No allow list
+      for Vanguard, and their line is injected code. Valorant and League cannot
+      be supported on this path. Write that into the supported-games policy
+      rather than letting users discover it.
+- [ ] **Plan for the patch day that breaks injection.** Valve's CS:GO Trusted
+      Mode required Authenticode signing and blocked DLLs that interfere with
+      the game, and injecting overlays stopped working overnight. Users blamed
+      the overlays. Decide in advance how Stasis detects it has been blocked,
+      what it tells the user, and how fast a fix can ship. This is a
+      when-not-if item on the chosen path.
+- [ ] **Authenticode signing is now a build-time dependency, not just a
+      distribution nicety.** Section 6's code signing item moves earlier: an
+      unsigned injected DLL is refused outright by some anti-cheat
+      configurations, so this gates the engine rather than the installer.
+- [ ] **Crash isolation inside someone else's process.** A fault in the hook
+      crashes the user's game, and the crash dump names Stasis. Decide the
+      guard: what is wrapped, what is never done on the render thread, and how
+      the overlay disables itself after a fault rather than crashing the same
+      game twice.
+- [ ] **A supported-games list, published.** Overwolf maintains one rather than
+      claiming universal support, because per-title quirks are unavoidable on
+      this path. Better to ship the honest list than to have users find the
+      gaps.
 - [ ] **Write to BattlEye and Epic describing the architecture, then publish the
       answers including silence.** A positive response would be the strongest
       asset the project could have. No response documents that the relationship
       route was not available, which is worth publishing too.
-- [ ] Choose the rendering path: D3D11/D3D12/Vulkan/OpenGL hooking, versus a
-      transparent click-through always-on-top window. The second is far safer
-      with anti-cheat and much worse for latency and exclusive fullscreen.
+- [x] Choose the rendering path. Decided: hooking. What remains is which APIs
+      and in what order.
+- [ ] **Pick the first graphics API and ship only that.** D3D11 is the widest
+      installed base and the best documented; D3D12 and Vulkan are more work per
+      title. Shipping one API that works beats five that half work, and the
+      supported-games list makes the limit honest.
+- [ ] **The injection mechanism itself.** How the DLL gets into the target, and
+      the failure path when it cannot. This is the part that most resembles a
+      cheat to an observer, so it deserves the clearest code and comments in the
+      repository.
 - [ ] Overlay process model: in-process hook, or a separate process compositing
       over the game. Separate is safer and slower.
 - [ ] Global hotkey registration, and a toggle that is guaranteed to release
