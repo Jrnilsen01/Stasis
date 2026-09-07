@@ -133,7 +133,7 @@ twice.
 
 This is the entire thing, and none of it exists yet.
 
-- [ ] **Anti-cheat strategy, before any injection code is written.** Still the
+- [x] **Anti-cheat strategy, before any injection code is written.** Still the
       single largest risk, and still not primarily technical.
 
       One correction, recorded rather than quietly edited. This file used to say
@@ -159,11 +159,29 @@ This is the entire thing, and none of it exists yet.
       The research is unverified, and three quotes in it are load-bearing. They
       still need checking before any of this is published as the project's
       public position, but they no longer block the build.
+
+      The stance is now written down and public in `docs/anti-cheat.md`: what
+      the engine does, eight things it does not do, and the residual risk stated
+      rather than waved away. It deliberately does not repeat the incumbent's
+      ban-safety claim, because this project cannot support one.
 - [ ] **Measure how many target titles actually present via exclusive
-      fullscreen.** Less decisive now that hooking is chosen, since hooking
-      handles every presentation mode. Still worth an afternoon: it sizes how
-      much of the benefit the harder path is actually buying.
-- [ ] **The fork hazard is now live, and needs an answer.** An Apache-2.0
+      fullscreen.** The method is written and ready to run in
+      `docs/measuring-presentation-modes.md`, with PresentMon commands for both
+      major versions and a table to fill in. Deliberately not run here: it means
+      launching real games, and nothing in this project touches a real game
+      without the owner choosing to.
+- [ ] **[decision] The fork hazard. Options paper written, decision open.**
+      `docs/fork-hazard.md` sets out four options with real costs and recommends
+      keeping Apache-2.0 while stating the risk publicly, on the grounds that
+      copyleft only buys a takedown claim against above-ground derivatives and
+      cheats are not distributed above ground. Its stronger argument is that
+      scope discipline beats licence choice: refusing to build memory helpers,
+      back-buffer readback, or a general-purpose hooking library costs nothing
+      and does more. That refusal is now in `CONTRIBUTING.md`. One deadline
+      worth knowing: splitting the hook layer into a copyleft repository loses
+      most of its value once the first hook lands under Apache-2.0.
+
+      The original framing, kept because it states the problem: An Apache-2.0
       repository containing working `Present` hooks for several graphics APIs is
       a cheat scaffold, and Overwolf says publicly that this is why their
       technology stays closed. The not-a-cheat statements in `README.md`,
@@ -172,11 +190,16 @@ This is the entire thing, and none of it exists yet.
       plainly, keep the hook layer in a separate repository under a copyleft
       licence, or revisit the section 1 licence decision. Deciding not to decide
       is the same as choosing the first.
-- [ ] **Riot titles are out of scope, by Riot's own statement.** No allow list
-      for Vanguard, and their line is injected code. Valorant and League cannot
-      be supported on this path. Write that into the supported-games policy
-      rather than letting users discover it.
-- [ ] **Plan for the patch day that breaks injection.** Valve's CS:GO Trusted
+- [x] **Riot titles are out of scope, by Riot's own statement.** Written into
+      `docs/supported-games.md` as the only populated table, under
+      will-not-be-supported, with Riot's own statement as the reason.
+- [x] **Plan for the patch day that breaks injection.**
+      `docs/when-injection-breaks.md`: seven instrumented attach stages so a
+      silent block is caught at "first frame seen", three local correlations
+      that separate blocked from broken, six user-facing message templates, six
+      fail-safe rules, a hard rule that a policy block is never worked around,
+      and a notification plan that works without the telemetry channel this
+      project has promised not to build. Original framing: Valve's CS:GO Trusted
       Mode required Authenticode signing and blocked DLLs that interfere with
       the game, and injecting overlays stopped working overnight. Users blamed
       the overlays. Decide in advance how Stasis detects it has been blocked,
@@ -191,14 +214,16 @@ This is the entire thing, and none of it exists yet.
       guard: what is wrapped, what is never done on the render thread, and how
       the overlay disables itself after a fault rather than crashing the same
       game twice.
-- [ ] **A supported-games list, published.** Overwolf maintains one rather than
-      claiming universal support, because per-title quirks are unavoidable on
-      this path. Better to ship the honest list than to have users find the
-      gaps.
+- [x] **A supported-games list, published.** `docs/supported-games.md`, with
+      four tiers, entry criteria, and six named transitions between them. It
+      opens by saying the list is empty because there is no engine yet, so it
+      cannot be mistaken for a list that failed to load.
 - [ ] **Write to BattlEye and Epic describing the architecture, then publish the
-      answers including silence.** A positive response would be the strongest
-      asset the project could have. No response documents that the relationship
-      route was not available, which is worth publishing too.
+      answers including silence.** Drafts are ready in `docs/vendor-letters.md`
+      with the sender blanks unfilled, plus three rules for handling a reply: do
+      not ask to be allowlisted, publish in full or not at all, and a reply is
+      not permission. Not sent, because sending mail in the owner's name is the
+      owner's to do.
 - [x] Choose the rendering path. Decided: hooking. What remains is which APIs
       and in what order.
 - [ ] **Pick the first graphics API and ship only that.** D3D11 is the widest
@@ -243,12 +268,14 @@ they land, so it can be specified now rather than discovered during the build.
 - [ ] **Honest degradation on an unsupported renderer.** A game on an unhandled
       graphics API should say so. An overlay that silently never appears is the
       worst version of this, because the user cannot tell it from a bug.
-- [ ] **HDR and colour space.** Overlays routinely break HDR output or render
-      washed out over it. Worth knowing which before the palette is committed to
-      a compositing path.
-- [ ] **Whether the overlay appears in captures.** OBS, ShadowPlay, and Game Bar
-      will either see it or not, depending on how it is drawn. Both answers are
-      defensible. Arriving at one by accident is not.
+- [x] **HDR and colour space.** Decided in `docs/hdr-and-capture.md`: the three
+      swapchain configurations, why washed out is the specific consequence of
+      skipping a transfer function, and a test that needs no HDR display,
+      because it asserts the swapchain description is unchanged across attach.
+- [x] **Whether the overlay appears in captures.** Decided in
+      `docs/hdr-and-capture.md`, with a default argued for and a user setting
+      later. `CONTRIBUTING.md` now refuses the inverse outright: anything drawn
+      so the player sees it and a capture does not is the shape of an ESP.
 - [ ] **A way to turn it off without launching the app.** If a hook misbehaves
       mid-session, the route out cannot run through the thing that is
       misbehaving. A file, a flag, or a safe mode.
