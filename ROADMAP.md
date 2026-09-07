@@ -28,13 +28,13 @@ lint, both suites, and the build on Windows for every push.
 
 ## Next: the overlay engine
 
-None of this exists. It is gated on a question that is not primarily technical.
+None of this exists yet, but the question that gated it has been answered.
 
-An unknown overlay that hooks a game's presentation looks, to an anti-cheat
-driver, much like a cheat. Being open source cuts both ways here: auditable, but
-also trivially forkable into something that is not. Users getting banned would
-end the project, so the posture has to be decided before the first line of
-injection code, not discovered afterwards.
+An overlay that hooks a game's presentation looks, to an anti-cheat driver, much
+like a cheat. Being open source cuts both ways here: auditable, but also
+forkable into something that is not. Users getting banned would end the project,
+which is why the posture was settled before the first line of injection code
+rather than discovered afterwards.
 
 **Decided: Stasis will hook the graphics API.** Injection into the game
 process, drawing in the game's own presentation path. This was chosen over a
