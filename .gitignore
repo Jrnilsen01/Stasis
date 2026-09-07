@@ -36,3 +36,7 @@ app-icon-sizes.png
 # Python bytecode from tools/
 __pycache__/
 *.pyc
+
+# Agent worktrees. These are git checkouts of this repo, so a bare `git add -A`
+# picks them up as embedded repositories.
+.claude/worktrees/
