@@ -438,8 +438,33 @@
   cursor: pointer;
 }
 
+/* The border is the second signal on a field the disk disagrees with. The
+   message under it is the first one, so nothing here is carried by colour
+   alone. */
+.input--wrong {
+  border-color: var(--state-error);
+}
+
 .input::placeholder {
   color: var(--text-muted);
+}
+
+/* The inline answer about the Steam folder. It stays in the document even when
+   there is nothing to say, so a screen reader is already watching the region
+   before it fills, and it takes no space until then. */
+.field__check {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.field__check:empty {
+  display: none;
+}
+
+.field__check--wrong {
+  color: var(--state-error);
 }
 
 .field__actions {

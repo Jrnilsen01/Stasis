@@ -1,4 +1,5 @@
 mod footprint;
+mod logging;
 mod modules;
 mod settings;
 mod steam;
@@ -33,6 +34,16 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(Mutex::new(FootprintState::new()))
+        .setup(|app| {
+            if let Err(e) = logging::init(app.handle()) {
+                // A logger that could not start is not a reason to refuse to
+                // open the window. Everything the app does still works; the
+                // next bug report is just thinner.
+                eprintln!("logging is unavailable: {e}");
+            }
+            log::info!("stasis {} started", app.package_info().version);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             footprint::read_footprint,
             steam::scan_steam_games,
@@ -41,7 +52,9 @@ pub fn run() {
             settings::load_settings,
             settings::save_settings,
             settings::reset_settings,
+            settings::check_steam_path,
             settings::config_path,
+            logging::log_path,
             reveal_path,
         ])
         .run(tauri::generate_context!())

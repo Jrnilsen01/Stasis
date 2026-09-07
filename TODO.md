@@ -357,10 +357,26 @@ are marked as such in the spec.
       scaling is the supported route.
 - [ ] Screen reader pass. Roles and focus order look right and have never been
       tested with NVDA or Narrator.
-- [ ] Structured logging with a log file the user can find and attach to a bug
-      report. There is currently no logging at all.
-- [ ] Settings currently lack validation: the Steam folder accepts any string
-      and only fails at scan time. Inline validation would be kinder.
+- [x] Structured logging with a log file the user can find and attach to a bug
+      report. `tauri-plugin-log` writes `logs/stasis.log` inside the app data
+      folder, next to `settings.json`, capped at one megabyte with the old file
+      dropped when it fills. Tauri's own log directory was not used: it is under
+      LocalAppData while everything else this app writes is under Roaming, and
+      one folder to point a user at is worth more than the platform default.
+      Every failure path in `steam.rs`, `modules.rs`, `settings.rs`, and
+      `footprint.rs` writes a line, and the footprint sampler writes its failure
+      once rather than every two seconds forever. Paths are redacted to `~`
+      before they reach the file, since the point of it is a public bug report.
+      The bug form no longer says there is nothing to attach.
+- [x] Settings now validate the Steam folder before a scan is attempted, on
+      arrival and on blur. Four answers, not two: empty is auto-detection and
+      says nothing, and a missing path, a file, and a real folder with no
+      `steamapps` each get their own sentence. `check_steam_path` and the
+      scanner share `holds_steam_library`, so the field and the scan cannot
+      disagree about the same folder. The message is tied to the input with
+      `aria-describedby` and `aria-invalid` rather than being red text. Saving a
+      path that does not resolve is still allowed: an unplugged external drive
+      is a real reason to keep one.
 - [ ] **Contrast over unpredictable content.** Every ratio in `DESIGN.md` is
       measured against a known surface. An overlay drawn on live gameplay has no
       guaranteed background, so the same palette that passes AA in the shell can

@@ -13,7 +13,8 @@ works from what is merely intended.
 
 There is nothing to sign up for, no analytics call on launch, and no ad slot
 anywhere in the design. Settings are written to a JSON file next to the app
-data and stay there.
+data and stay there. The log file sits beside it and is the same promise: it is
+written locally, it is never uploaded, and nothing reads it but you.
 
 That holds for every version, not only this one. If it ever stops being true,
 this paragraph is the first thing that has to change.
@@ -45,7 +46,14 @@ Every screen is wired to something real. There is no sample data anywhere.
   install and the screen says so plainly.
 - **Settings.** Two preferences, both consumed by something: the Steam folder
   override feeds the scanner, and the sample rate drives the footprint poll.
-  Stored as JSON next to the app data. Nothing is sent anywhere.
+  Stored as JSON next to the app data. Nothing is sent anywhere. The Steam
+  folder is checked against the disk as you leave the field, so a wrong path
+  says so there instead of failing later on the Games screen.
+- **Logs.** Failures are written to `logs/stasis.log` in the same app data
+  folder, with a timestamp and a level, capped at a megabyte so a session left
+  open all day cannot fill a disk. Settings names the path and opens the folder.
+  Paths under your user folder are written as `~`, because the file exists to be
+  attached to a public bug report.
 
 ## What is deliberately absent
 

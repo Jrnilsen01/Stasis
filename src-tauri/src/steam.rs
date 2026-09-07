@@ -2,6 +2,8 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
+use crate::logging::redact;
+
 /// One installed game, read from Steam's own manifests. Every field here comes
 /// off disk. Nothing is estimated, so a game with no recorded play time reports
 /// `None` rather than a plausible-looking date.
@@ -119,6 +121,15 @@ fn candidate_roots(override_path: Option<&str>) -> Vec<PathBuf> {
     candidates
 }
 
+/// True when this folder is a Steam install.
+///
+/// One definition, shared: the inline check behind the Settings field and the
+/// scan itself both call this, so the two cannot drift apart and disagree about
+/// the same folder.
+pub fn holds_steam_library(root: &Path) -> bool {
+    root.join("steamapps").is_dir()
+}
+
 /// Every library folder Steam knows about, including the root itself. Games on a
 /// second drive are the normal case, not an edge case.
 fn library_folders(steam_root: &Path) -> Vec<PathBuf> {
@@ -200,7 +211,12 @@ pub fn scan_steam_games(override_path: Option<String>) -> ScanResult {
         .is_some_and(|p| !p.trim().is_empty());
     let candidates = candidate_roots(override_path.as_deref());
 
-    let Some(steam_root) = candidates.iter().find(|p| p.join("steamapps").is_dir()) else {
+    let Some(steam_root) = candidates.iter().find(|p| holds_steam_library(p)) else {
+        let searched: Vec<String> = candidates.iter().map(|p| redact(p)).collect();
+        log::warn!(
+            "no steamapps folder in any of {}, override set: {overridden}",
+            searched.join(", ")
+        );
         return ScanResult::SteamNotFound {
             searched: candidates.iter().map(|p| p.display().to_string()).collect(),
             overridden,
@@ -212,6 +228,7 @@ pub fn scan_steam_games(override_path: Option<String>) -> ScanResult {
     // A root that exists but cannot be listed is a permissions problem, and the
     // user needs to be told that rather than shown an empty library.
     if let Err(e) = std::fs::read_dir(steam_root.join("steamapps")) {
+        log::error!("{} could not be listed: {e}", redact(steam_root));
         return ScanResult::Unreadable {
             path: steam_root.display().to_string(),
             reason: e.to_string(),
@@ -223,6 +240,14 @@ pub fn scan_steam_games(override_path: Option<String>) -> ScanResult {
         .flat_map(|lib| games_in_library(lib))
         .collect();
     games.sort_by_key(|g| g.name.to_lowercase());
+
+    // Counts, not titles. Which games someone owns is theirs to share, and the
+    // numbers are what a "my library is listed twice" report needs anyway.
+    log::info!(
+        "scanned {} library folder(s), found {} game(s)",
+        libraries.len(),
+        games.len()
+    );
 
     ScanResult::Scanned {
         steam_root: steam_root.display().to_string(),

@@ -97,5 +97,8 @@ body:
     attributes:
       label: Anything else
       description: >
-        Screenshots help. There is no log file to attach yet: the app does no
-        logging at all, which is its own open item.
+        Screenshots help, and so does the log file. Settings names its full path
+        and has a button that opens the folder it is in. It records what failed
+        and when, it never leaves your machine on its own, and paths under your
+        user folder are written as `~` so your account name is not in it. Read it
+        before you attach it if you would rather be sure.
