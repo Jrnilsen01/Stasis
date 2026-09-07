@@ -242,8 +242,11 @@ This is the entire thing, and none of it exists yet.
       signal and a kill-switch check; discovery, the inject decision and
       lifecycle stay in the Stasis process. Reasoned out in the `engine/inject`
       crate docs.
-- [ ] Global hotkey registration, and a toggle that is guaranteed to release
-      input back to the game.
+- [x] Global hotkey registration, and a guaranteed input release. `engine/input`.
+      Registration lives in the supervisor, not the hook, so a hung hook cannot
+      eat the key that turns it off. A rebind onto a taken chord keeps the
+      working binding and returns the reason, rather than leaving the user with
+      no way to close an overlay already on screen.
 - [x] Exclusive fullscreen versus borderless, per game. Separated by a shell
       hint rather than guessed from geometry, and reported as unknown when the
       hint is missing rather than promising an overlay that true exclusive
@@ -262,11 +265,16 @@ they land, so it can be specified now rather than discovered during the build.
       only an explicit acknowledgement leaves, so a hook that killed a game
       cannot kill it again on restart, and a game that died before the overlay
       touched it is told apart rather than blamed on the overlay.
-- [ ] **The input state machine.** Click-through by default, input captured only
-      while the overlay is focused, and a release path that holds even if the
-      overlay itself has hung. The failure here is a player who cannot control
-      their game, which is worse than a crash because it looks like the game's
-      fault.
+- [x] **The input state machine.** `engine/input`, 70 tests. Capture is a lease
+      the in-game filter checks against its own clock, so input returns on its
+      own when the supervisor dies, which is the failure the obvious watchdog
+      mechanisms cannot cover. A BFS over every five-event sequence proves no
+      reachable state holds input with no way back. Default Ctrl+Shift+F9.
+- [ ] **Verify hotkey delivery on a real keypress.** Everything downstream of
+      `WM_HOTKEY` is tested; the one unverified link is Windows delivering it on
+      an actual key press, which the live tests could not exercise without
+      synthesising input. One human keypress against
+      `cargo run -p stasis-input --example toggle` closes it.
 - [ ] **A performance budget, stated as a number.** "Lighter than the incumbent"
       is the product's whole argument and is currently an adjective. Decide the
       frame time and memory the overlay is allowed to cost, and how that is
