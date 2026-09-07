@@ -21,8 +21,9 @@ follows from that.
       and `Cargo.toml` both carry the SPDX id.
 - [x] Fill the copyright holder in the `LICENSE` appendix. Set to
       `Copyright 2026 Jrnilsen01`.
-- [ ] **[decision] Repo owner and name.** Personal account or an organisation.
-      An org is worth it if anyone else will ever have commit rights.
+- [x] **[decision] Repo owner and name.** Decided by creating it: the personal
+      account, at `Jrnilsen01/Stasis`. Move it to an organisation later if
+      anyone else ever needs commit rights.
 - [x] **[decision] Telemetry stance.** Decided: no telemetry, no ads, no
       account, committed to in the README as a promise for every version rather
       than a description of this one. Nothing in the current code contradicts
@@ -70,10 +71,9 @@ follows from that.
       version, GPU and driver, and the commit built from, and asks for game and
       launcher where a title is involved. Blank issues are disabled so the
       structured fields are not bypassed.
-- [ ] Add a `contact_links` entry to `.github/ISSUE_TEMPLATE/config.yml` sending
-      security reports to the advisory page. It needs the real owner and repo in
-      the URL, so it waits on the repo being created. Until then both the bug
-      form and `SECURITY.md` say it in prose.
+- [x] Added a `contact_links` entry to `.github/ISSUE_TEMPLATE/config.yml`
+      pointing at the advisory page for Jrnilsen01/Stasis. It only becomes a
+      working route once private vulnerability reporting is switched on.
 - [x] `CHANGELOG.md` and a versioning policy. Solved with a single source of
       truth rather than a sync script: `version` now lives only in
       `src-tauri/Cargo.toml`. The key was removed from `tauri.conf.json`, which

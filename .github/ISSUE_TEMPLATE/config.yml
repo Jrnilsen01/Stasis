@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Jrnilsen01/Stasis/security/advisories/new
+    about: >
+      Private disclosure, not a public issue. This app reads your filesystem and
+      will eventually draw on top of other processes, so a report with no fix
+      available puts every user at risk. See SECURITY.md.
