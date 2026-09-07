@@ -28,6 +28,11 @@ sysinfo = "0.33"
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
 
+[dev-dependencies]
+# Already in the lock file as a transitive dependency, so this adds no download
+# and nothing to the shipped binary.
+tempfile = "3"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

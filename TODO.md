@@ -93,9 +93,13 @@ shipped one real bug, where the registry spelling and the manifest spelling of
 the same Steam folder were treated as two libraries and every game was listed
 twice.
 
-- [ ] Rust unit tests for `steam.rs`: `vdf_values` against real manifest
-      samples, the case-and-separator dedupe in `library_folders`, and the
-      override-is-authoritative behaviour in `candidate_roots`.
+- [x] Rust unit tests for `steam.rs`. 19 tests covering `vdf_values` against a
+      real manifest sample, the case-and-separator dedupe in `library_folders`,
+      the override-is-authoritative behaviour in `candidate_roots`, and
+      `games_in_library`. The dedupe test was mutation-checked: reverting the
+      canonicalisation makes it fail with "the same folder in two spellings was
+      counted twice", so it genuinely guards the bug rather than passing by
+      accident.
 - [ ] Rust tests for `modules.rs` manifest parsing, including a malformed
       `module.json` (currently surfaces as an error, which is intended).
 - [ ] Frontend tests for `format.ts`. Boundary cases: exactly 1024 bytes, the
@@ -105,7 +109,13 @@ twice.
       failure. They are implemented and unverified.
 - [ ] CI on Windows: `cargo test`, `cargo clippy -- -D warnings`, `cargo fmt
       --check`, `tsc`, and a full `tauri build` on tags.
-- [ ] Add `lint` and `test` scripts to `package.json`; there are none.
+- [x] Added `lint` and `test` scripts to `package.json`. `npm test` runs the
+      Rust suite; `npm run lint` runs `tsc --noEmit`, clippy, and a fmt check.
+- [ ] `npm run lint` currently fails on pre-existing code, so `CONTRIBUTING.md`
+      documents checks the repo does not pass. Two clippy findings
+      (`modules.rs:63` and `steam.rs:214`, both `sort_by` that should be
+      `sort_by_key`) and rustfmt diffs in `modules.rs` and `steam.rs`. Fix
+      before wiring up CI, or CI is red on its first run.
 
 ## 4. The product: the overlay engine
 

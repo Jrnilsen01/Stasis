@@ -219,3 +219,269 @@ pub fn scan_steam_games(override_path: Option<String>) -> ScanResult {
         games,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    const MANIFEST: &str = r#"
+"AppState"
+{
+	"appid"		"220"
+	"Universe"		"1"
+	"name"		"Half-Life 2"
+	"StateFlags"		"4"
+	"installdir"		"Half-Life 2"
+	"LastUpdated"		"1698240000"
+	"SizeOnDisk"		"7538044108"
+	"LastPlayed"		"1700000000"
+}
+"#;
+
+    // --- vdf_values -------------------------------------------------------
+
+    #[test]
+    fn reads_the_fields_a_manifest_actually_carries() {
+        assert_eq!(vdf_value(MANIFEST, "appid").as_deref(), Some("220"));
+        assert_eq!(vdf_value(MANIFEST, "name").as_deref(), Some("Half-Life 2"));
+        assert_eq!(
+            vdf_value(MANIFEST, "SizeOnDisk").as_deref(),
+            Some("7538044108")
+        );
+        assert_eq!(
+            vdf_value(MANIFEST, "LastPlayed").as_deref(),
+            Some("1700000000")
+        );
+    }
+
+    #[test]
+    fn key_matching_ignores_case() {
+        // Steam has not been consistent about casing across manifest versions,
+        // so "sizeondisk" and "SizeOnDisk" have to reach the same value.
+        assert_eq!(
+            vdf_value(MANIFEST, "sizeondisk"),
+            vdf_value(MANIFEST, "SizeOnDisk")
+        );
+        assert_eq!(vdf_value(MANIFEST, "APPID").as_deref(), Some("220"));
+    }
+
+    #[test]
+    fn a_key_that_prefixes_another_key_does_not_match_it() {
+        // "name" must not pick up "name_localized". The closing quote inside the
+        // needle is what prevents it, so this locks that in.
+        let content = r#"
+	"name_localized"		"Halbwertszeit 2"
+	"name"		"Half-Life 2"
+"#;
+        assert_eq!(vdf_value(content, "name").as_deref(), Some("Half-Life 2"));
+    }
+
+    #[test]
+    fn unescapes_the_doubled_backslashes_steam_writes() {
+        let content = r#""path"		"D:\\SteamLibrary\\Games""#;
+        assert_eq!(
+            vdf_value(content, "path").as_deref(),
+            Some(r"D:\SteamLibrary\Games")
+        );
+    }
+
+    #[test]
+    fn returns_every_occurrence_in_file_order() {
+        let content = r#"
+"libraryfolders"
+{
+	"0"
+	{
+		"path"		"C:\\Steam"
+	}
+	"1"
+	{
+		"path"		"D:\\SteamLibrary"
+	}
+}
+"#;
+        assert_eq!(
+            vdf_values(content, "path"),
+            vec![r"C:\Steam", r"D:\SteamLibrary"]
+        );
+    }
+
+    #[test]
+    fn a_missing_key_yields_nothing_rather_than_an_empty_string() {
+        assert!(vdf_values(MANIFEST, "BetaKey").is_empty());
+        assert_eq!(vdf_value(MANIFEST, "BetaKey"), None);
+    }
+
+    // --- candidate_roots --------------------------------------------------
+
+    #[test]
+    fn an_override_is_the_only_candidate() {
+        // The whole point of the setting: auto-detection must not run behind it
+        // and quietly scan a different folder than the one the user named.
+        let roots = candidate_roots(Some(r"D:\Games\Steam"));
+        assert_eq!(roots, vec![PathBuf::from(r"D:\Games\Steam")]);
+    }
+
+    #[test]
+    fn an_override_is_trimmed() {
+        let roots = candidate_roots(Some("  D:\\Games\\Steam  "));
+        assert_eq!(roots, vec![PathBuf::from(r"D:\Games\Steam")]);
+    }
+
+    #[test]
+    fn a_blank_override_falls_back_to_auto_detection() {
+        // An empty settings field means "unset", not "scan the empty path".
+        for blank in ["", "   ", "\t"] {
+            let roots = candidate_roots(Some(blank));
+            assert!(
+                !roots.contains(&PathBuf::from(blank)),
+                "blank override {blank:?} was treated as a real path"
+            );
+        }
+    }
+
+    // --- library_folders --------------------------------------------------
+
+    fn steam_root_with(manifest: Option<&str>) -> TempDir {
+        let dir = TempDir::new().expect("temp dir");
+        let steamapps = dir.path().join("steamapps");
+        fs::create_dir_all(&steamapps).expect("steamapps");
+        if let Some(content) = manifest {
+            fs::write(steamapps.join("libraryfolders.vdf"), content).expect("write manifest");
+        }
+        dir
+    }
+
+    #[test]
+    fn the_root_counts_as_a_library_even_with_no_manifest() {
+        let dir = steam_root_with(None);
+        assert_eq!(library_folders(dir.path()), vec![dir.path().to_path_buf()]);
+    }
+
+    #[test]
+    fn a_second_drive_is_listed_alongside_the_root() {
+        let other = TempDir::new().expect("temp dir");
+        let listed = other.path().display().to_string().replace('\\', r"\\");
+        let dir = steam_root_with(Some(&format!("\"path\"\t\t\"{listed}\"")));
+
+        assert_eq!(library_folders(dir.path()).len(), 2);
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn the_root_listed_back_in_its_own_manifest_is_not_a_second_library() {
+        // The bug this guards: Steam records its own root inside
+        // libraryfolders.vdf spelled differently from the registry, so comparing
+        // the raw paths counted one folder twice and listed every game twice.
+        let dir = steam_root_with(None);
+        let root = dir.path().display().to_string();
+        let restyled = root.to_lowercase().replace('\\', "/");
+        assert_ne!(root, restyled, "the test needs the two spellings to differ");
+
+        fs::write(
+            dir.path().join("steamapps").join("libraryfolders.vdf"),
+            format!("\"path\"\t\t\"{restyled}\""),
+        )
+        .expect("write manifest");
+
+        assert_eq!(
+            library_folders(dir.path()),
+            vec![dir.path().to_path_buf()],
+            "the same folder in two spellings was counted twice"
+        );
+    }
+
+    #[test]
+    fn a_library_that_no_longer_exists_is_still_reported() {
+        // Canonicalisation cannot resolve a drive that is gone, so the raw path
+        // is kept. Dropping it silently would hide a library the user still has
+        // configured.
+        let dir = steam_root_with(Some(r#""path"		"Z:\\GoneLibrary""#));
+        let libraries = library_folders(dir.path());
+
+        assert_eq!(libraries.len(), 2);
+        assert!(libraries.contains(&PathBuf::from(r"Z:\GoneLibrary")));
+    }
+
+    // --- games_in_library -------------------------------------------------
+
+    fn library_with(manifests: &[(&str, &str)]) -> TempDir {
+        let dir = TempDir::new().expect("temp dir");
+        let steamapps = dir.path().join("steamapps");
+        fs::create_dir_all(&steamapps).expect("steamapps");
+        for (filename, content) in manifests {
+            fs::write(steamapps.join(filename), content).expect("write manifest");
+        }
+        dir
+    }
+
+    #[test]
+    fn reads_a_game_out_of_a_real_manifest() {
+        let dir = library_with(&[("appmanifest_220.acf", MANIFEST)]);
+        let games = games_in_library(dir.path());
+
+        assert_eq!(games.len(), 1);
+        assert_eq!(games[0].app_id, "220");
+        assert_eq!(games[0].name, "Half-Life 2");
+        assert_eq!(games[0].size_on_disk, Some(7_538_044_108));
+        assert_eq!(games[0].last_played, Some(1_700_000_000));
+    }
+
+    #[test]
+    fn a_never_played_game_reports_none_rather_than_the_epoch() {
+        // Steam writes 0 for "never played". Passing that through as a date
+        // would render as 1 January 1970 in the UI.
+        let manifest = r#"
+	"appid"		"400"
+	"name"		"Portal"
+	"LastPlayed"		"0"
+"#;
+        let dir = library_with(&[("appmanifest_400.acf", manifest)]);
+        let games = games_in_library(dir.path());
+
+        assert_eq!(games.len(), 1);
+        assert_eq!(games[0].last_played, None);
+    }
+
+    #[test]
+    fn a_manifest_with_no_name_is_a_partial_download_and_is_skipped() {
+        let manifest = r#"
+	"appid"		"620"
+	"StateFlags"		"1026"
+"#;
+        let dir = library_with(&[("appmanifest_620.acf", manifest)]);
+        assert!(games_in_library(dir.path()).is_empty());
+    }
+
+    #[test]
+    fn a_missing_size_is_none_rather_than_zero() {
+        let manifest = r#"
+	"appid"		"70"
+	"name"		"Half-Life"
+"#;
+        let dir = library_with(&[("appmanifest_70.acf", manifest)]);
+        let games = games_in_library(dir.path());
+
+        assert_eq!(games[0].size_on_disk, None);
+    }
+
+    #[test]
+    fn files_that_are_not_app_manifests_are_ignored() {
+        let dir = library_with(&[
+            ("appmanifest_220.acf", MANIFEST),
+            ("libraryfolders.vdf", r#""path"		"C:\\Steam""#),
+            ("appmanifest_220.acf.bak", MANIFEST),
+            ("workshop_220.acf", MANIFEST),
+        ]);
+
+        assert_eq!(games_in_library(dir.path()).len(), 1);
+    }
+
+    #[test]
+    fn a_library_with_no_steamapps_folder_yields_no_games() {
+        let dir = TempDir::new().expect("temp dir");
+        assert!(games_in_library(dir.path()).is_empty());
+    }
+}
