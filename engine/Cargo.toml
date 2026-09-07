@@ -1,0 +1,25 @@
+# The engine is its own workspace, deliberately separate from `src-tauri`.
+#
+# Two reasons. The overlay payload is a cdylib injected into another process and
+# must not drag the Tauri dependency tree in with it, and keeping the boundary
+# at the filesystem makes it obvious which code runs inside somebody else's
+# game.
+[workspace]
+resolver = "2"
+members = ["harness", "detect", "inject", "overlay", "input"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+windows = "0.58"
+windows-core = "0.58"
+log = "0.4"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

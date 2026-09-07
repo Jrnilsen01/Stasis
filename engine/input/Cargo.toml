@@ -1,0 +1,14 @@
+[package]
+name = "stasis-input"
+description = "Hotkeys, and the guarantee that input goes back to the game"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+log = { workspace = true }
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+] }

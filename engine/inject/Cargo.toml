@@ -1,0 +1,17 @@
+[package]
+name = "stasis-inject"
+description = "Loads the overlay payload into a target process, and reports honestly when it cannot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+log = { workspace = true }
+stasis-detect = { path = "../detect" }
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Memory",
+  "Win32_System_Threading",
+] }

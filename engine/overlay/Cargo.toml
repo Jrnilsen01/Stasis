@@ -1,0 +1,27 @@
+[package]
+name = "stasis-overlay"
+description = "The payload that runs inside the game process and draws the overlay"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+# A cdylib because this is loaded into another process. Nothing in this crate
+# may depend on the Tauri tree: it runs inside somebody else's game.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+log = { workspace = true }
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Direct3D",
+  "Win32_Graphics_Direct3D11",
+  "Win32_Graphics_Dxgi",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_System_Console",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Memory",
+  "Win32_System_SystemServices",
+  "Win32_System_Threading",
+  "Win32_UI_WindowsAndMessaging",
+] }
