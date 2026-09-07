@@ -44,20 +44,23 @@ Later runs rebuild only the crate.
 
 ## Before you open a pull request
 
-There is no CI yet, so these are on you:
+Three commands, all from the repo root:
 
 ```
-npm run build                          # tsc, then the vite build
-cd src-tauri
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
+npm run lint     # tsc, clippy with warnings as errors, and a rustfmt check
+npm test         # the Rust suite, then the frontend suite
+npm run build    # tsc, then the vite build
 ```
 
-`cargo test` currently passes because there are no tests. That is a gap, not a
-standard: `TODO.md` section 3 lists the tests the project most needs, and the
-VDF parsing in `steam.rs` is the highest-value target because it has already
-shipped one real bug.
+CI runs exactly these on `windows-latest` for every push and pull request, so a
+green run locally means a green run there. Tagged releases additionally build
+the installers.
+
+The suites split along the Tauri bridge. Rust tests live beside the code they
+cover in `src-tauri/src`, and cover the Steam manifest parsing, the library
+deduplication, and the module manifest reading. Frontend tests use Vitest with
+jsdom, mock `src/lib/api`, and cover the formatters and the view states that are
+hard to reach by hand, such as a Steam folder that exists but cannot be listed.
 
 Run the app and use the thing you changed. A build that compiles is not evidence
 that a screen works.

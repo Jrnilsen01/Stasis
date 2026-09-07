@@ -100,15 +100,27 @@ twice.
       canonicalisation makes it fail with "the same folder in two spellings was
       counted twice", so it genuinely guards the bug rather than passing by
       accident.
-- [ ] Rust tests for `modules.rs` manifest parsing, including a malformed
-      `module.json` (currently surfaces as an error, which is intended).
-- [ ] Frontend tests for `format.ts`. Boundary cases: exactly 1024 bytes, the
-      99.9 to 100 switch from one decimal to none, and null handling.
-- [ ] Exercise the three UI states never yet triggered: Steam found but
-      unreadable, Steam found with zero games, and a modules folder read
-      failure. They are implemented and unverified.
-- [ ] CI on Windows: `cargo test`, `cargo clippy -- -D warnings`, `cargo fmt
-      --check`, `tsc`, and a full `tauri build` on tags.
+- [x] Rust tests for `modules.rs` manifest parsing. 8 tests, including the
+      malformed `module.json` surfacing as an error rather than a silent skip,
+      and that `path` comes from the folder rather than from the manifest, so a
+      module cannot claim to live somewhere it does not. Needed a small
+      refactor: `read_modules(&Path)` split out of `list_modules`, because the
+      `AppHandle` there only supplies a path and cannot be built in a test.
+- [x] Frontend tests for `format.ts`. 13 tests including all three named
+      boundaries: 1023 versus 1024 bytes, 102297 versus 102400 for the 99.9 to
+      100 decimal switch, and null, undefined, NaN, and Infinity handling.
+      Vitest with jsdom is now set up; the config lives in `vite.config.ts`.
+- [x] Exercise the three UI states never yet triggered. All three now have
+      component tests that mock `src/lib/api`: Steam unreadable, Steam with zero
+      games, and a modules folder read failure. Each asserts the distinction
+      that matters, in particular that an unreadable folder reports a null count
+      rather than zero, since zero would render as a successful scan that found
+      nothing.
+- [x] CI on Windows, in `.github/workflows/ci.yml`. The `check` job runs
+      `npm run lint` (tsc, clippy, fmt), both test suites, and the build on
+      every push and pull request. The `bundle` job runs `tauri build` on `v*`
+      tags and uploads the installers. Windows only on purpose: building on
+      macOS or Linux would give a green tick to path code nobody has run.
 - [x] Added `lint` and `test` scripts to `package.json`. `npm test` runs the
       Rust suite; `npm run lint` runs `tsc --noEmit`, clippy, and a fmt check.
 - [x] `npm run lint` passes. Both clippy findings became `sort_by_key`, and
