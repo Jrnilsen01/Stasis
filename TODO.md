@@ -152,6 +152,48 @@ This is the entire thing, and none of it exists yet.
       input back to the game.
 - [ ] Exclusive fullscreen versus borderless behaviour, per game.
 
+The five decisions above gate the code. Everything below holds whichever way
+they land, so it can be specified now rather than discovered during the build.
+
+- [ ] **Game detection.** Knowing a game started, which process it is, and which
+      of its windows to draw over. Process enumeration, window class matching,
+      and launcher integration fail differently, and attaching to the wrong
+      window is worse than attaching to none.
+- [ ] **The attach and detach lifecycle.** Game start, alt-tab, minimise,
+      resolution change, moving to another monitor, exit, and crash. Each is a
+      transition the overlay has to survive. The crash case matters most: the
+      overlay must never be the reason a game dies.
+- [ ] **The input state machine.** Click-through by default, input captured only
+      while the overlay is focused, and a release path that holds even if the
+      overlay itself has hung. The failure here is a player who cannot control
+      their game, which is worse than a crash because it looks like the game's
+      fault.
+- [ ] **A performance budget, stated as a number.** "Lighter than the incumbent"
+      is the product's whole argument and is currently an adjective. Decide the
+      frame time and memory the overlay is allowed to cost, and how that is
+      measured, before there is code to measure. The footprint bar already does
+      this for the shell; the engine is the part that will actually cost
+      something.
+- [ ] **Multi-monitor and mixed DPI.** Which display the game is on, what
+      happens when it moves, and how the overlay scales when two monitors
+      disagree about DPI.
+- [ ] **Honest degradation on an unsupported renderer.** A game on an unhandled
+      graphics API should say so. An overlay that silently never appears is the
+      worst version of this, because the user cannot tell it from a bug.
+- [ ] **HDR and colour space.** Overlays routinely break HDR output or render
+      washed out over it. Worth knowing which before the palette is committed to
+      a compositing path.
+- [ ] **Whether the overlay appears in captures.** OBS, ShadowPlay, and Game Bar
+      will either see it or not, depending on how it is drawn. Both answers are
+      defensible. Arriving at one by accident is not.
+- [ ] **A way to turn it off without launching the app.** If a hook misbehaves
+      mid-session, the route out cannot run through the thing that is
+      misbehaving. A file, a flag, or a safe mode.
+- [ ] **How the engine gets tested at all.** Hooking cannot be unit tested the
+      way `steam.rs` can. A small harness that presents frames like a game does
+      is probably the only honest answer, and it is worth building before the
+      engine rather than after.
+
 ## 5. The module system
 
 Third parties will write modules the moment the repo is public, so the format
@@ -168,6 +210,17 @@ becomes a contract earlier than expected.
       counts; the state has nowhere to live yet.
 - [ ] Installation flow. Folder drop works today and is honest; a registry or
       index is a much larger commitment.
+- [ ] **Module lifecycle.** Load, unload, enable, disable, and reload without
+      restarting the app or the game.
+- [ ] **A per-module resource budget.** One heavy module must not be able to
+      spend the performance argument the whole product rests on.
+- [ ] **Crash isolation.** A module that fails should take down itself and
+      nothing else, least of all the game.
+- [ ] **A compatibility policy.** What happens when a module written against an
+      older schema meets a newer host, and the reverse. Left implicit now, this
+      is the part that hurts most later.
+- [ ] **Module development without a game.** Whoever writes a module needs to
+      see it render without launching a title and alt-tabbing after every edit.
 
 ## 6. Distribution and trust
 
@@ -204,6 +257,11 @@ becomes a contract earlier than expected.
       report. There is currently no logging at all.
 - [ ] Settings currently lack validation: the Steam folder accepts any string
       and only fails at scan time. Inline validation would be kinder.
+- [ ] **Contrast over unpredictable content.** Every ratio in `DESIGN.md` is
+      measured against a known surface. An overlay drawn on live gameplay has no
+      guaranteed background, so the same palette that passes AA in the shell can
+      fail over a bright scene. The overlay needs its own contrast strategy, a
+      scrim or a backing surface, rather than inheriting the shell's numbers.
 - [ ] A light theme, if it is ever wanted. Dark is currently the only theme and
       `DESIGN.md` gives the reason. If light is added, both modes have to be
       fully correct, not one plus an afterthought.
