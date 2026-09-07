@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
 
+use crate::logging::redact;
+
 /// An installed overlay module, read from its own manifest on disk.
 ///
 /// There is no bundled module registry, so on a fresh install this list is
@@ -25,8 +27,10 @@ fn modules_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("no data directory available: {e}"))?
         .join("modules");
-    std::fs::create_dir_all(&dir)
-        .map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    std::fs::create_dir_all(&dir).map_err(|e| {
+        log::error!("{} could not be created: {e}", redact(&dir));
+        format!("could not create {}: {e}", dir.display())
+    })?;
     Ok(dir)
 }
 
@@ -46,8 +50,10 @@ pub fn list_modules(app: tauri::AppHandle) -> Result<Vec<Module>, String> {
 /// path. Keeping the reading separate makes it testable against a real folder
 /// rather than a mocked application.
 fn read_modules(root: &Path) -> Result<Vec<Module>, String> {
-    let entries =
-        std::fs::read_dir(root).map_err(|e| format!("could not read {}: {e}", root.display()))?;
+    let entries = std::fs::read_dir(root).map_err(|e| {
+        log::error!("{} could not be listed: {e}", redact(root));
+        format!("could not read {}: {e}", root.display())
+    })?;
 
     let mut modules = Vec::new();
 
@@ -64,6 +70,7 @@ fn read_modules(root: &Path) -> Result<Vec<Module>, String> {
                 modules.push(module);
             }
             Err(e) => {
+                log::error!("{} did not parse: {e}", redact(&manifest));
                 return Err(format!(
                     "{} is not a valid module manifest: {e}",
                     manifest.display()

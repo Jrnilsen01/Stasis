@@ -58,9 +58,11 @@ the installers.
 
 The suites split along the Tauri bridge. Rust tests live beside the code they
 cover in `src-tauri/src`, and cover the Steam manifest parsing, the library
-deduplication, and the module manifest reading. Frontend tests use Vitest with
-jsdom, mock `src/lib/api`, and cover the formatters and the view states that are
-hard to reach by hand, such as a Steam folder that exists but cannot be listed.
+deduplication, the module manifest reading, the folder check behind the Settings
+field, and the redaction that keeps a user name out of the log file. Frontend
+tests use Vitest with jsdom, mock `src/lib/api`, and cover the formatters and the
+view states that are hard to reach by hand, such as a Steam folder that exists
+but cannot be listed, or a path the disk disagrees with.
 
 Run the app and use the thing you changed. A build that compiles is not evidence
 that a screen works.

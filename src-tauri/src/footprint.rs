@@ -26,6 +26,11 @@ pub struct FootprintState {
     pid: Pid,
     started: Instant,
     sampled_once: bool,
+    /// Whether the "process not visible" failure has already been written.
+    /// The poll runs every couple of seconds for as long as the app is open, so
+    /// a sampler that stays broken would otherwise write the same line
+    /// thousands of times and push everything else out of a capped file.
+    reported_missing: bool,
 }
 
 impl FootprintState {
@@ -35,6 +40,7 @@ impl FootprintState {
             pid: Pid::from_u32(std::process::id()),
             started: Instant::now(),
             sampled_once: false,
+            reported_missing: false,
         }
     }
 }
@@ -50,13 +56,20 @@ pub fn read_footprint(state: tauri::State<'_, Mutex<FootprintState>>) -> Result<
         ProcessRefreshKind::nothing().with_memory().with_cpu(),
     );
 
-    let process = state
+    // Both figures are copied out here so the borrow of the sampler ends before
+    // the failure branch below writes back to the same state.
+    let sample = state
         .system
         .process(pid)
-        .ok_or_else(|| format!("process {pid} not visible to the sampler"))?;
+        .map(|process| (process.memory(), process.cpu_usage()));
 
-    let memory_bytes = process.memory();
-    let cpu_percent = process.cpu_usage();
+    let Some((memory_bytes, cpu_percent)) = sample else {
+        if !state.reported_missing {
+            state.reported_missing = true;
+            log::error!("the footprint sampler cannot see this process");
+        }
+        return Err(format!("process {pid} not visible to the sampler"));
+    };
 
     // The first refresh has no previous sample to diff against, so its CPU
     // figure is meaningless. Report nothing rather than a misleading 0.0.

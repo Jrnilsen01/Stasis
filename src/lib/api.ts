@@ -45,6 +45,18 @@ export type Settings = {
   sampleIntervalMs: number;
 };
 
+/**
+ * What the Steam folder field was found to be, checked against the disk before
+ * a scan is attempted. An empty field is its own answer rather than a failure,
+ * because empty is the normal state of that setting.
+ */
+export type SteamPathCheck =
+  | { status: "automatic" }
+  | { status: "usable" }
+  | { status: "missing" }
+  | { status: "notAFolder" }
+  | { status: "noSteamapps" };
+
 export const readFootprint = () => invoke<Footprint>("read_footprint");
 
 export const scanSteamGames = (overridePath: string) =>
@@ -59,7 +71,10 @@ export const loadSettings = () => invoke<Settings>("load_settings");
 export const saveSettings = (settings: Settings) =>
   invoke<Settings>("save_settings", { settings });
 export const resetSettings = () => invoke<Settings>("reset_settings");
+export const checkSteamPath = (path: string) =>
+  invoke<SteamPathCheck>("check_steam_path", { path });
 export const configPath = () => invoke<string>("config_path");
+export const logPath = () => invoke<string>("log_path");
 
 export const revealPath = (path: string) => invoke<void>("reveal_path", { path });
 
