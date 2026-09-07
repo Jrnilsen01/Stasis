@@ -9,11 +9,15 @@ Stasis is currently the app shell: the window you open outside the game. It
 reads your Steam library, lists modules from a folder, and measures its own
 memory and CPU. That part works and is wired to real data.
 
-There is no overlay engine. Nothing hooks a game, nothing injects, nothing
-renders on top of anything. If you came to work on overlay rendering, the
-decisions that come before that code are still open in `TODO.md` section 4, and
-the anti-cheat question there has to be settled first. It is not a technical
-detail that can be worked around later.
+There is no overlay engine yet, but the question that gated it has been
+answered: Stasis injects and hooks the graphics API, D3D11 first. Read
+`docs/anti-cheat.md` before touching anything under `engine/`. It is the
+project's public position and it constrains what the engine may do, not just
+what it says.
+
+The engine lives in its own Cargo workspace under `engine/`, separate from
+`src-tauri`, because the overlay payload is injected into another process and
+must not carry the Tauri dependency tree in with it.
 
 In practice this is a Windows project. `steam.rs` contains macOS and Linux path
 detection that has never been run, so treat those paths as unverified rather
@@ -114,6 +118,15 @@ Agent instructions, including the design filter the project uses, live in
   that does not exist, or a toggle with no engine behind it. The comment at the
   top of `src/components/Rail.tsx` explains why the rail has three destinations
   instead of six: the other three would have been links to nothing.
+- **A refactor that turns the hook layer into a general-purpose hooking
+  library.** It will arrive as a well-argued architecture pull request, and it
+  is the single change that most increases what a fork of this repository is
+  worth to somebody building a cheat. `docs/fork-hazard.md` explains the
+  reasoning. The hook exists to draw this overlay, and it stays shaped like
+  that.
+- **Anything drawn so that the user sees it and a capture does not.** An overlay
+  invisible to recording, visible to the player, is the shape of an ESP. See
+  `docs/hdr-and-capture.md`.
 - **Fabricated content.** No sample games, no placeholder modules that look
   installed, no statistics without a source. Every screen in this app is wired
   to something real, and the empty states say they are empty.

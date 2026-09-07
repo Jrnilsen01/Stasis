@@ -8,7 +8,9 @@ works and is tested. Everything after it is intent, and some of it is not even
 that yet.
 
 `TODO.md` holds the same picture in more detail, with the reasoning attached to
-each item.
+each item. `docs/` holds the positions that follow from the engine decision: the
+anti-cheat stance, the supported-games policy, what happens when injection is
+blocked, and the fork hazard.
 
 ## Now: the shell
 
@@ -76,14 +78,17 @@ module exfiltrates something.
 
 ## In parallel: coverage and trust
 
-None of these wait for the engine.
-
 - **More launchers.** The scanner reads Steam only. Epic, GOG, Xbox and Game
-  Pass, Battle.net, EA, and Ubisoft are all unhandled.
-- **Code signing.** Installers are unsigned, so SmartScreen warns every user.
-  For a product whose argument is trustworthiness, that matters more than usual.
+  Pass, Battle.net, EA, and Ubisoft are all unhandled. This one genuinely does
+  not wait for the engine.
+- **Code signing.** This stopped being a distribution nicety when the injection
+  path was chosen. Some anti-cheat configurations refuse an unsigned injected
+  DLL outright, so signing now gates the engine rather than the installer.
+  SmartScreen warning on an unsigned installer is the smaller half of the
+  problem.
 - **Auto-update**, which needs the signing key handling settled first.
-- **Logging, settings validation, and an accessibility pass.**
+- **Logging and settings validation**, both done. An accessibility pass, text
+  scaling, and the overlay's own contrast problem remain.
 
 ## Not on this roadmap
 

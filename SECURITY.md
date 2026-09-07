@@ -2,10 +2,15 @@
 
 ## What this project is right now
 
-Stasis is an app shell. There is no overlay engine, no injection, and no module
-runtime yet, so the real attack surface is much smaller than the finished
-product's will be. A report about frame hooking, process injection, or overlay
-rendering is describing code that has not been written.
+Stasis is an app shell. The overlay engine is being built under `engine/` but is
+not wired into the app, so the shipped attack surface is still much smaller than
+the finished product's will be.
+
+The engine's intended behaviour is documented in `docs/anti-cheat.md`, and that
+document is the right thing to check a report against. If you find the engine
+doing something that document says it does not do, that is a security issue
+under this policy even if it harms nobody directly, because the document is a
+promise users are asked to rely on.
 
 There are no releases. The only version that gets fixes is the current `main`.
 

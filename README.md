@@ -21,13 +21,15 @@ this paragraph is the first thing that has to change.
 
 ## This is not a cheat
 
-An overlay that will one day draw on top of a running game sits close enough to
-that category to be worth saying plainly. Stasis will not read another process's
-memory for gameplay advantage, and it will not show a player information the
-game has not already given them. Contributions that add either will be refused.
+Stasis injects into the game process and hooks its presentation, which sits
+close enough to the wrong category to be worth saying plainly. It will not read
+the game's memory. Not for gameplay advantage, not at all. It will not show a
+player information the game has not already given them, send input to a game,
+modify game files, or load a driver.
 
-`CONTRIBUTING.md` says the same thing for pull requests, and `SECURITY.md` for
-reports.
+`docs/anti-cheat.md` is the full position, including the residual risk that
+document is honest about. `CONTRIBUTING.md` says the same for pull requests and
+`SECURITY.md` for reports.
 
 ## What actually works
 
