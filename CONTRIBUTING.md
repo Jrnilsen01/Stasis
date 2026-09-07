@@ -115,6 +115,28 @@ Agent instructions, including the design filter the project uses, live in
 - **Fabricated content.** No sample games, no placeholder modules that look
   installed, no statistics without a source. Every screen in this app is wired
   to something real, and the empty states say they are empty.
+- **A plausible-looking wrong value where absent is the honest answer.** This
+  bites in practice. The EA launcher records a size for every installed game and
+  the number is wrong, by a factor of eighty in one measured case, so the right
+  field value is nothing at all. `Game.last_played` already works this way for
+  the same reason.
+
+## Reading other software's files
+
+The scanner reads data that belongs to Steam, and will read more launchers over
+time. Four rules, all of which a pull request is checked against:
+
+- **Read only.** Never write to another launcher's files or registry keys.
+  Open SQLite databases read-only.
+- **No authenticated APIs.** Nothing that needs an account, a token, or a login.
+  Several launchers expose richer data that way, and the reason a field is
+  missing is often that reaching it would require signing in as the user.
+- **No circumvention.** Do not decrypt a launcher's encrypted files, and do not
+  modify permissions to reach a protected directory. Where a value is only
+  available that way, the value is not available.
+- **Parse defensively.** These are third-party files that change without notice,
+  so a format that has drifted is a normal case, not an exceptional one. A
+  parser that panics on unexpected input is a bug.
 
 ## Reporting bugs and vulnerabilities
 

@@ -133,16 +133,38 @@ twice.
 
 This is the entire thing, and none of it exists yet.
 
-- [ ] **Anti-cheat strategy, before any injection code is written.** This is
-      the single largest risk to the project and it is not primarily technical.
-      Overwolf's real moat is that it is known to EAC, BattlEye, and publishers,
-      so its overlay does not get users banned. An unknown overlay that hooks
-      `Present` looks exactly like an ESP cheat to an anti-cheat driver, and
-      being open source cuts both ways: auditable, but also trivially forkable
-      into a cheat, which is precisely why vendors distrust it. Decide early
-      whether to pursue vendor relationships, restrict to games without kernel
-      anti-cheat, or use only officially sanctioned overlay APIs. Users getting
-      banned would end the project.
+- [ ] **Anti-cheat strategy, before any injection code is written.** Still the
+      single largest risk, and still not primarily technical.
+
+      One correction, recorded rather than quietly edited. This file used to say
+      Overwolf's moat is that it is known to EAC, BattlEye and publishers.
+      Research found nothing Overwolf publishes that names an anti-cheat vendor:
+      their guarantees are about publisher terms of service and per-app
+      curation, and their own API reference advertises `requestGameInjection()`
+      across D3D9, D3D11, D3D12 and Vulkan. They hook like anyone else.
+
+      What the evidence does support: Riot states there is no allow list for
+      Vanguard, BattlEye supports non-cheat overlays unless a developer objects,
+      and the one well-documented ban case (Overplus in Dota 2, 2024) turned on
+      what a module displayed rather than how it was drawn. Bans came from
+      content, not technique, which moves that risk to section 5.
+
+      The decision itself is unchanged and still open: vendor relationships,
+      restrict to titles without kernel anti-cheat, sanctioned APIs only, or a
+      non-injecting transparent window. Users getting banned would end the
+      project.
+
+      This is unverified research, not settled fact. Three quotes are
+      load-bearing and need checking against their sources before any of it is
+      published as the project's position.
+- [ ] **Measure how many target titles actually present via exclusive
+      fullscreen.** The research could not establish it, and it is the one
+      unknown that could still change the rendering-path answer. PresentMon
+      across a target list is roughly a day, and it turns an argument into data.
+- [ ] **Write to BattlEye and Epic describing the architecture, then publish the
+      answers including silence.** A positive response would be the strongest
+      asset the project could have. No response documents that the relationship
+      route was not available, which is worth publishing too.
 - [ ] Choose the rendering path: D3D11/D3D12/Vulkan/OpenGL hooking, versus a
       transparent click-through always-on-top window. The second is far safer
       with anti-cheat and much worse for latency and exclusive fullscreen.
@@ -206,6 +228,12 @@ becomes a contract earlier than expected.
 - [ ] Module sandboxing and a permission model. A module that can read the
       screen and the filesystem is a keylogger waiting to happen, and "we are
       not adware" dies the first time a module exfiltrates something.
+
+      Now on the critical path for the anti-cheat decision rather than
+      downstream of it. The Overplus case in section 4 says bans follow from
+      what a module displays, so a module showing an enemy ability timer gets
+      users banned no matter how carefully the engine draws it. A content policy
+      is part of this, not a separate concern.
 - [ ] Enable and disable per module, and per game. The rail already shows
       counts; the state has nowhere to live yet.
 - [ ] Installation flow. Folder drop works today and is honest; a registry or
@@ -236,9 +264,44 @@ becomes a contract earlier than expected.
 
 ## 7. Coverage
 
-- [ ] Launchers beyond Steam: Epic, GOG, Xbox/Game Pass, Battle.net, EA,
-      Ubisoft, and plain executables. The scanner is currently Steam-only, and
-      `ScanResult` will need to become per-source rather than one Steam shape.
+Launchers beyond Steam, ranked by effort against value. Three of these were
+verified against a real install during research; the rest rest on prior art and
+are marked as such in the spec.
+
+- [ ] **Epic.** A directory of JSON `.item` manifests carrying id, name,
+      `InstallSize`, install path and launch executable already. Cheapest of the
+      six and high reach.
+- [ ] **Battle.net.** The uninstall registry alone covered every installed game
+      on the test machine, with `UninstallString` carrying the uid. Strongest
+      audience overlap for an overlay. Note that its two data sources are
+      incomplete in opposite directions, so the union keyed on uid is the only
+      correct answer.
+- [ ] **GOG.** Registry sub-keys plus `goggame-<id>.info`, and the only source
+      with a real local `last_played`.
+- [ ] **EA.** Reuses the Battle.net uninstall scanner with a different
+      predicate. Two hard rules: do not decrypt the `IS` file, which is
+      plausibly circumvention and unnecessary anyway, and report
+      `size_on_disk` as `None`, because the size EA records is present and
+      wrong by a factor of eighty in one measured case.
+- [ ] **Xbox and Game Pass.** Highest value below Epic and the most distinct
+      work: a `.GamingRoot` binary parse, XML, and per-drive partial failure.
+- [ ] **Ubisoft.** Registry gives paths cheaply, but names need a heuristic
+      parser whose own reference implementation admits to guesswork. Smallest
+      audience, highest maintenance. Last for a reason.
+- [ ] **Plain executables**, for anything none of the above knows about.
+- [ ] **Redesign `ScanResult` as per-source.** Keep the three states, and add
+      `Disabled` and `Unsupported` so neither is mistaken for `NotFound`: "you
+      have no Epic" and "you asked me not to look" are different sentences.
+      Partial failure belongs inside a successful scan as warnings, so one
+      readable Xbox drive and one denied stays a good scan with a caveat. Never
+      merge duplicates: two installs are two directories with two executables,
+      and the overlay attaches to a process one specific launcher started.
+- [ ] **Add `launch_executable` to `Game`.** Free from Epic, GOG and Xbox, and
+      it is the field the overlay engine will need to match a running process.
+- [ ] **Say "not recorded" where a launcher does not record it.** `last_played`
+      is absent for five of the six new sources. An empty cell reads as "never
+      played", which is a different and false statement, and sorting by last
+      played would put almost everything in one bucket.
 - [ ] macOS and Linux path detection in `steam.rs` is written but has never
       been run. Either test it or mark the project Windows-only for now and say
       so in the README.
