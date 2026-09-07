@@ -31,13 +31,18 @@ follows from that.
 
 ## 2. Before the first public commit
 
-- [ ] `git init`, and make the first commit the current working state so the
-      history starts clean.
+- [x] `git init` and the first commit. Branch `main`, commit `d14af87`, 69
+      files. Author identity is set repo-locally to the GitHub noreply address
+      so no personal email lands in public history; the global git config was
+      left untouched.
 - [x] Add the chosen `LICENSE` file, and a licence line in `README.md`.
-- [x] Extend `.gitignore`. `dist` and `node_modules` were already covered.
-      `src-tauri/target/` was not, and it is the big one. Also added
-      `src-tauri/gen/schemas/`, which tauri-build regenerates every build, and
-      `app-icon-sizes.png`.
+- [x] Extend `.gitignore`. Correction to an earlier note here: `src-tauri/target/`
+      and `gen/schemas` were already covered, by `src-tauri/.gitignore` rather
+      than the root one. The root rules are redundant but harmless, and more
+      discoverable. Genuinely added: `app-icon-sizes.png`, and `__pycache__/`
+      plus `*.pyc`, which was catching real bytecode staged from `tools/`.
+- [x] `.gitattributes` with `* text=auto` and explicit binary rules for the
+      icons and fonts, so line endings do not vary by whoever committed last.
 - [x] `public/` removed. The premise of this item was slightly off: there was
       no `publicDir` line in `vite.config.ts` to drop, so the folder was only
       Vite's default convention directory sitting empty. Nothing referenced it,
