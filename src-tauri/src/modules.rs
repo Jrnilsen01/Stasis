@@ -25,7 +25,8 @@ fn modules_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .app_data_dir()
         .map_err(|e| format!("no data directory available: {e}"))?
         .join("modules");
-    std::fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("could not create {}: {e}", dir.display()))?;
     Ok(dir)
 }
 
@@ -37,8 +38,8 @@ pub fn modules_dir(app: tauri::AppHandle) -> Result<String, String> {
 #[tauri::command]
 pub fn list_modules(app: tauri::AppHandle) -> Result<Vec<Module>, String> {
     let root = modules_root(&app)?;
-    let entries = std::fs::read_dir(&root)
-        .map_err(|e| format!("could not read {}: {e}", root.display()))?;
+    let entries =
+        std::fs::read_dir(&root).map_err(|e| format!("could not read {}: {e}", root.display()))?;
 
     let mut modules = Vec::new();
 
@@ -55,11 +56,14 @@ pub fn list_modules(app: tauri::AppHandle) -> Result<Vec<Module>, String> {
                 modules.push(module);
             }
             Err(e) => {
-                return Err(format!("{} is not a valid module manifest: {e}", manifest.display()));
+                return Err(format!(
+                    "{} is not a valid module manifest: {e}",
+                    manifest.display()
+                ));
             }
         }
     }
 
-    modules.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    modules.sort_by_key(|m| m.name.to_lowercase());
     Ok(modules)
 }

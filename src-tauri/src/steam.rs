@@ -21,7 +21,11 @@ pub struct Game {
 /// The scan distinguishes three outcomes because they are three different
 /// screens: no Steam at all, Steam with an empty library, and a real list.
 #[derive(Serialize)]
-#[serde(tag = "status", rename_all = "camelCase", rename_all_fields = "camelCase")]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
 pub enum ScanResult {
     /// Steam itself was not found, so there is nothing to read.
     SteamNotFound {
@@ -49,7 +53,10 @@ fn vdf_values(content: &str, key: &str) -> Vec<String> {
 
     for line in content.lines() {
         let trimmed = line.trim();
-        if !trimmed.to_ascii_lowercase().starts_with(&needle.to_ascii_lowercase()) {
+        if !trimmed
+            .to_ascii_lowercase()
+            .starts_with(&needle.to_ascii_lowercase())
+        {
             continue;
         }
         let after_key = &trimmed[needle.len()..];
@@ -166,7 +173,8 @@ fn games_in_library(library: &Path) -> Vec<Game> {
         };
 
         // A manifest without a name is a partial download, not an installed game.
-        let (Some(app_id), Some(name)) = (vdf_value(&content, "appid"), vdf_value(&content, "name"))
+        let (Some(app_id), Some(name)) =
+            (vdf_value(&content, "appid"), vdf_value(&content, "name"))
         else {
             continue;
         };
@@ -210,8 +218,11 @@ pub fn scan_steam_games(override_path: Option<String>) -> ScanResult {
         };
     }
 
-    let mut games: Vec<Game> = libraries.iter().flat_map(|lib| games_in_library(lib)).collect();
-    games.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    let mut games: Vec<Game> = libraries
+        .iter()
+        .flat_map(|lib| games_in_library(lib))
+        .collect();
+    games.sort_by_key(|g| g.name.to_lowercase());
 
     ScanResult::Scanned {
         steam_root: steam_root.display().to_string(),

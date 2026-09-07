@@ -30,7 +30,8 @@ fn settings_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
         .path()
         .app_config_dir()
         .map_err(|e| format!("no config directory available: {e}"))?;
-    std::fs::create_dir_all(&dir).map_err(|e| format!("could not create {}: {e}", dir.display()))?;
+    std::fs::create_dir_all(&dir)
+        .map_err(|e| format!("could not create {}: {e}", dir.display()))?;
     Ok(dir.join("settings.json"))
 }
 
@@ -48,7 +49,8 @@ pub fn load_settings(app: tauri::AppHandle) -> Result<Settings, String> {
 pub fn save_settings(app: tauri::AppHandle, settings: Settings) -> Result<Settings, String> {
     let path = settings_file(&app)?;
     let encoded = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
-    std::fs::write(&path, encoded).map_err(|e| format!("could not write {}: {e}", path.display()))?;
+    std::fs::write(&path, encoded)
+        .map_err(|e| format!("could not write {}: {e}", path.display()))?;
     Ok(settings)
 }
 

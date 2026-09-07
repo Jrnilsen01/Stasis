@@ -111,11 +111,11 @@ twice.
       --check`, `tsc`, and a full `tauri build` on tags.
 - [x] Added `lint` and `test` scripts to `package.json`. `npm test` runs the
       Rust suite; `npm run lint` runs `tsc --noEmit`, clippy, and a fmt check.
-- [ ] `npm run lint` currently fails on pre-existing code, so `CONTRIBUTING.md`
-      documents checks the repo does not pass. Two clippy findings
-      (`modules.rs:63` and `steam.rs:214`, both `sort_by` that should be
-      `sort_by_key`) and rustfmt diffs in `modules.rs` and `steam.rs`. Fix
-      before wiring up CI, or CI is red on its first run.
+- [x] `npm run lint` passes. Both clippy findings became `sort_by_key`, and
+      rustfmt was run across the crate: 3 files, 29 insertions, 12 deletions,
+      and zero comment lines touched, so the wrapped prose in the source is as
+      it was. `CONTRIBUTING.md` now documents checks the repo actually meets,
+      which means CI will be green on its first run rather than red.
 
 ## 4. The product: the overlay engine
 
