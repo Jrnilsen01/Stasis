@@ -5,13 +5,23 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+# The injector talks to another process at a low level, so it needs a fairly
+# wide slice of the Win32 surface. Each feature below is here for one job:
+# Threading for OpenProcess and the remote thread, Memory for the remote
+# allocation the DLL path is written into, Diagnostics_Debug for
+# WriteProcessMemory, Diagnostics_ToolHelp for finding a process by name and
+# for checking whether the payload is already loaded, LibraryLoader for the
+# address of LoadLibraryW, and SystemInformation for the machine type that
+# tells 32 from 64 bit.
 [dependencies]
 log = { workspace = true }
-stasis-detect = { path = "../detect" }
 windows = { workspace = true, features = [
   "Win32_Foundation",
+  "Win32_Security",
   "Win32_System_Diagnostics_Debug",
+  "Win32_System_Diagnostics_ToolHelp",
   "Win32_System_LibraryLoader",
   "Win32_System_Memory",
+  "Win32_System_SystemInformation",
   "Win32_System_Threading",
 ] }

@@ -184,12 +184,7 @@ fn main() -> Result<()> {
             // A slowly cycling colour, so a present that has stopped is visible
             // without reading a log.
             let t = frame as f32 * 0.01;
-            let clear = [
-                0.05 + 0.05 * t.sin(),
-                0.05,
-                0.08 + 0.05 * t.cos(),
-                1.0f32,
-            ];
+            let clear = [0.05 + 0.05 * t.sin(), 0.05, 0.08 + 0.05 * t.cos(), 1.0f32];
             renderer
                 .context
                 .ClearRenderTargetView(&renderer.target, &clear);

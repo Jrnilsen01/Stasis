@@ -66,18 +66,97 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: |
+            src-tauri
+            engine
 
       - run: npm ci
 
       - name: Build the installers
         run: npm run tauri build
 
-      # Unsigned, so SmartScreen will warn on anything downloaded from here.
-      # Code signing is still open in TODO.md section 6.
+      # The overlay payload is built here too, so the signing step below has a
+      # DLL to sign alongside the installers. It is a cdylib in the engine
+      # workspace, separate from the Tauri build on purpose.
+      - name: Build the overlay payload
+        run: cargo build --release --manifest-path engine/Cargo.toml -p stasis-overlay
+
+      # Authenticode signing. This matters more here than for an ordinary
+      # desktop app: an unsigned installer only trips SmartScreen, but some
+      # anti-cheat configurations refuse an unsigned injected DLL outright, so
+      # the payload has to be signed for the overlay to load at all where that
+      # is enforced. Valve's CS Trusted Mode is the documented precedent.
+      #
+      # The step signs only when the certificate secrets are present, and skips
+      # with a clear message otherwise, so a fork with no secrets still gets a
+      # green build rather than a failing one. To turn signing on, the repo
+      # owner supplies three repository secrets:
+      #
+      #   WINDOWS_CERT_PFX_BASE64     the signing certificate as a base64 PFX
+      #   WINDOWS_CERT_PASSWORD       the password for that PFX
+      #   WINDOWS_CERT_TIMESTAMP_URL  optional; a timestamp server, so
+      #                               signatures outlive the certificate
+      - name: Sign the payload and installers
+        shell: pwsh
+        env:
+          WINDOWS_CERT_PFX_BASE64: ${{ secrets.WINDOWS_CERT_PFX_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+          WINDOWS_CERT_TIMESTAMP_URL: ${{ secrets.WINDOWS_CERT_TIMESTAMP_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PFX_BASE64) -or
+              [string]::IsNullOrWhiteSpace($env:WINDOWS_CERT_PASSWORD)) {
+            Write-Host "No signing secrets are set, so nothing is signed."
+            Write-Host "The payload and installers are left unsigned; on a fork this is expected."
+            Write-Host "To enable signing, set WINDOWS_CERT_PFX_BASE64 and WINDOWS_CERT_PASSWORD."
+            exit 0
+          }
+
+          # Materialise the certificate from the secret into a runner-local file.
+          $pfx = Join-Path $env:RUNNER_TEMP "stasis-signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX_BASE64))
+
+          # signtool ships with the Windows SDK; pick the newest one installed.
+          $signtool = Get-ChildItem "C:/Program Files (x86)/Windows Kits/10/bin/*/x64/signtool.exe" |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $signtool) {
+            Write-Error "signtool.exe was not found on the runner."
+            exit 1
+          }
+
+          $timestamp = if ($env:WINDOWS_CERT_TIMESTAMP_URL) {
+            $env:WINDOWS_CERT_TIMESTAMP_URL
+          } else {
+            "http://timestamp.digicert.com"
+          }
+
+          # The payload DLL first, then the installers.
+          $targets = @()
+          $targets += Get-ChildItem "engine/target/release/stasis_overlay.dll" -ErrorAction SilentlyContinue
+          $targets += Get-ChildItem "src-tauri/target/release/bundle/msi/*.msi" -ErrorAction SilentlyContinue
+          $targets += Get-ChildItem "src-tauri/target/release/bundle/nsis/*.exe" -ErrorAction SilentlyContinue
+          if ($targets.Count -eq 0) {
+            Write-Error "Signing is configured but no payload or installer files were found to sign."
+            exit 1
+          }
+
+          foreach ($file in $targets) {
+            & $signtool sign /f $pfx /p $env:WINDOWS_CERT_PASSWORD /fd SHA256 /tr $timestamp /td SHA256 $file.FullName
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Signing failed for $($file.FullName)."
+              exit 1
+            }
+          }
+
+          Remove-Item $pfx -Force
+          Write-Host "Signed $($targets.Count) file(s)."
+
+      # The installers, signed if the secrets above were present and unsigned
+      # otherwise. The artifact name does not claim either way, because which
+      # one it is depends on whether the release was built with signing set up.
       - uses: actions/upload-artifact@v4
         with:
-          name: stasis-windows-unsigned
+          name: stasis-windows-installers
           path: |
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
