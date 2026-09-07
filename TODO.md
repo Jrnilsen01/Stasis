@@ -205,15 +205,16 @@ This is the entire thing, and none of it exists yet.
       the overlays. Decide in advance how Stasis detects it has been blocked,
       what it tells the user, and how fast a fix can ship. This is a
       when-not-if item on the chosen path.
-- [ ] **Authenticode signing is now a build-time dependency, not just a
-      distribution nicety.** Section 6's code signing item moves earlier: an
-      unsigned injected DLL is refused outright by some anti-cheat
-      configurations, so this gates the engine rather than the installer.
-- [ ] **Crash isolation inside someone else's process.** A fault in the hook
-      crashes the user's game, and the crash dump names Stasis. Decide the
-      guard: what is wrapped, what is never done on the render thread, and how
-      the overlay disables itself after a fault rather than crashing the same
-      game twice.
+- [x] **Authenticode signing wired into CI**, as far as it can go without a
+      certificate. The tag-only `bundle` job signs the payload DLL and the
+      installers when `WINDOWS_CERT_PFX_BASE64` and `WINDOWS_CERT_PASSWORD` are
+      set, and skips with a clear message on a fork that has neither. Still open:
+      the owner has to obtain a certificate and set the secrets, which is in
+      section 6.
+- [ ] **Crash isolation inside someone else's process.** Belongs to the overlay
+      crate, still in flight. The injector half is done: the controller lives
+      out of process on purpose, so a misbehaving hook has somewhere safe to
+      recover from.
 - [x] **A supported-games list, published.** `docs/supported-games.md`, with
       four tiers, entry criteria, and six named transitions between them. It
       opens by saying the list is empty because there is no engine yet, so it
@@ -230,12 +231,17 @@ This is the entire thing, and none of it exists yet.
       installed base and the best documented; D3D12 and Vulkan are more work per
       title. Shipping one API that works beats five that half work, and the
       supported-games list makes the limit honest.
-- [ ] **The injection mechanism itself.** How the DLL gets into the target, and
-      the failure path when it cannot. This is the part that most resembles a
-      cheat to an observer, so it deserves the clearest code and comments in the
-      repository.
-- [ ] Overlay process model: in-process hook, or a separate process compositing
-      over the game. Separate is safer and slower.
+- [x] **The injection mechanism itself.** `engine/inject`, verified live against
+      the harness: the payload loads and the harness keeps presenting, and three
+      failure paths produce their typed error live. VirtualAllocEx plus
+      WriteProcessMemory plus CreateRemoteThread into LoadLibraryW, documented
+      Win32 only, written to be read by an auditor.
+- [x] Overlay process model decided. The hook forces the drawing in-process, so
+      what remained was how much else moves in. Answer: as little as defensible.
+      The cdylib inside the game holds only the hook, the drawing, a readiness
+      signal and a kill-switch check; discovery, the inject decision and
+      lifecycle stay in the Stasis process. Reasoned out in the `engine/inject`
+      crate docs.
 - [ ] Global hotkey registration, and a toggle that is guaranteed to release
       input back to the game.
 - [ ] Exclusive fullscreen versus borderless behaviour, per game.
@@ -276,9 +282,12 @@ they land, so it can be specified now rather than discovered during the build.
       `docs/hdr-and-capture.md`, with a default argued for and a user setting
       later. `CONTRIBUTING.md` now refuses the inverse outright: anything drawn
       so the player sees it and a capture does not is the shape of an ESP.
-- [ ] **A way to turn it off without launching the app.** If a hook misbehaves
-      mid-session, the route out cannot run through the thing that is
-      misbehaving. A file, a flag, or a safe mode.
+- [x] **A way to turn it off without launching the app.** `engine/inject` kill
+      switch: the `STASIS_DISABLE` environment variable set before launch, or a
+      marker file droppable mid-session (`%TEMP%\stasis-disable`, or
+      `STASIS_DISABLE_FILE` to relocate it). The injector checks it before
+      injecting, and the payload checks it in `DllMain` and refuses to load.
+      Documented in the crate docs so a user in trouble can find it.
 - [ ] **How the engine gets tested at all.** Hooking cannot be unit tested the
       way `steam.rs` can. A small harness that presents frames like a game does
       is probably the only honest answer, and it is worth building before the
