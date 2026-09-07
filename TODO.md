@@ -244,19 +244,24 @@ This is the entire thing, and none of it exists yet.
       crate docs.
 - [ ] Global hotkey registration, and a toggle that is guaranteed to release
       input back to the game.
-- [ ] Exclusive fullscreen versus borderless behaviour, per game.
+- [x] Exclusive fullscreen versus borderless, per game. Separated by a shell
+      hint rather than guessed from geometry, and reported as unknown when the
+      hint is missing rather than promising an overlay that true exclusive
+      fullscreen will not show. In `engine/detect`.
 
 The five decisions above gate the code. Everything below holds whichever way
 they land, so it can be specified now rather than discovered during the build.
 
-- [ ] **Game detection.** Knowing a game started, which process it is, and which
-      of its windows to draw over. Process enumeration, window class matching,
-      and launcher integration fail differently, and attaching to the wrong
-      window is worse than attaching to none.
-- [ ] **The attach and detach lifecycle.** Game start, alt-tab, minimise,
-      resolution change, moving to another monitor, exit, and crash. Each is a
-      transition the overlay has to survive. The crash case matters most: the
-      overlay must never be the reason a game dies.
+- [x] **Game detection.** `engine/detect`, verified live against the harness:
+      found by window class, executable name and pid, all reaching the same
+      window. Window rejection is eight named reasons ordered by certainty, and
+      it opens no handle to the game, so it never asks for the memory-read access
+      a cheat would.
+- [x] **The attach and detach lifecycle.** A pure, exhaustively tested state
+      machine in `engine/detect`. The crash path lands in a `Lost` state that
+      only an explicit acknowledgement leaves, so a hook that killed a game
+      cannot kill it again on restart, and a game that died before the overlay
+      touched it is told apart rather than blamed on the overlay.
 - [ ] **The input state machine.** Click-through by default, input captured only
       while the overlay is focused, and a release path that holds even if the
       overlay itself has hung. The failure here is a player who cannot control
@@ -268,12 +273,15 @@ they land, so it can be specified now rather than discovered during the build.
       measured, before there is code to measure. The footprint bar already does
       this for the shell; the engine is the part that will actually cost
       something.
-- [ ] **Multi-monitor and mixed DPI.** Which display the game is on, what
-      happens when it moves, and how the overlay scales when two monitors
-      disagree about DPI.
-- [ ] **Honest degradation on an unsupported renderer.** A game on an unhandled
-      graphics API should say so. An overlay that silently never appears is the
-      worst version of this, because the user cannot tell it from a bug.
+- [x] **Multi-monitor and mixed DPI.** `engine/detect`, per-monitor-v2 DPI
+      awareness confirmed live. One honest caveat carried forward: the mixed-DPI
+      logic is unit tested but not hardware tested, because this machine has a
+      single 96 dpi display. Worth an afternoon on a two-monitor setup.
+- [x] **Honest degradation on an unsupported renderer.** `engine/detect`
+      identifies the graphics API by loaded modules and names an unsupported one,
+      so the UI can say "this game uses Vulkan, not supported yet" rather than
+      showing nothing. D3D12 correctly outranks the d3d11.dll that D3D11On12
+      pulls into a D3D12 title.
 - [x] **HDR and colour space.** Decided in `docs/hdr-and-capture.md`: the three
       swapchain configurations, why washed out is the specific consequence of
       skipping a transfer function, and a test that needs no HDR display,
